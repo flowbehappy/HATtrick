@@ -99,6 +99,13 @@ void Frontier::findMaxTCAC(){
     int step;
     int i;
     int clients;
+    auto is_peak_found = [](const double cur_th, const double prev_th) {
+        if (prev_th > 0.5) {
+            return cur_th - prev_th > 0.05 * prev_th;
+        } else {
+            return cur_th - prev_th > 0.01 * prev_th;
+        }
+    };
     // First find max AC, then find max TC
     for(int c=1; c >-1; c--){
         init_peak_found = false;
@@ -111,7 +118,7 @@ void Frontier::findMaxTCAC(){
         while(init_peak_found==false){
             clients = i*step;
             current_throughput = runBenchmark(clients, choice[c]);
-            if (current_throughput - previous_throughput > 0.05*previous_throughput) {
+            if (is_peak_found(current_throughput, previous_throughput)) {
                 previous_throughput = current_throughput;
                 previous_peak = clients;
             } else {
@@ -124,7 +131,7 @@ void Frontier::findMaxTCAC(){
         while(final_peak_found==false){
             clients = init_peak+i;
             current_throughput = runBenchmark(clients, choice[c]);
-            if (current_throughput - previous_throughput > 0.05*previous_throughput) {
+            if (is_peak_found(current_throughput, previous_throughput)) {
                 previous_throughput = current_throughput;
                 previous_peak = clients;
             } else {
