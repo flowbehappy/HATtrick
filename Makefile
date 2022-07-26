@@ -1,4 +1,5 @@
 CC=g++
+#CC=clang++
 
 CXXFLAGS=-c -std=c++2a -Wall -Werror \
 	-g -O2 -DNDEBUG # release mode
@@ -32,4 +33,4 @@ $(EXECUTABLE): $(OBJECTS)
 .PHONY: clean
 clean:
 	rm $(OBJECTS) $(EXECUTABLE)
-	rm -rf results
+	#rm -rf results
