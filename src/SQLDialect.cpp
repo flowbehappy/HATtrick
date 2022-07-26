@@ -745,6 +745,7 @@ vector<vector<string>> SQLDialect::createIndexStmt = {
                 "       VALUES (@OrderKey, 4, @CustKey, @PartKey4, @SuppKey4, @DateKey4, @OrdPriority, @ShipPriority, @quantity,\n"
                 "       @ExtendedPrice, @discount, @revenue, @SupplyCost, @tax, @DateKey4, @ShipMode);\n"
 		"END",
+                
 		"CREATE PROCEDURE HAT.PAYMENT(\n"
                 "       @CustKey INT, @SuppKey INT, @amount DECIMAL, @OrderKey INT)\n"
                 "WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER\n"  

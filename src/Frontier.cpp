@@ -1,4 +1,5 @@
 #include "Frontier.h"
+#include <memory>
 
 void  Frontier::deleteTuples(){
     SQLHENV env = 0;
@@ -43,8 +44,7 @@ void Frontier::createFreshnessTable(int& tc){
     Driver::disconnectDB(dbc);
 } 
 
-double Frontier::runBenchmark(int& peak, int& choice){
-    double peak_throughput = 0;
+double Frontier::runBenchmark(const int peak, const int choice){
     int ac = 0, tc = 0;
     if(choice == 1){   // seeking max for transactional workload 
         tc = peak;
@@ -55,36 +55,37 @@ double Frontier::runBenchmark(int& peak, int& choice){
         ac = peak;
     }
     createFreshnessTable(tc);
+
     auto startTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-    cout << "\nChoice: [3] Run Benchmark" << endl;
+    cout << "\nChoice: [3] Run Benchmark with tc=" << tc << ", ac=" << ac << endl;
     cout << "START TIME of [3] " << ctime(&startTime) << endl;
     SQLHENV env = 0;
     Driver::setEnv(env);
     UserInput::setAnalyticalClients(ac);
     UserInput::setTransactionalClients(tc);
-    auto* g = new Globals();
+    auto g = std::make_unique<Globals>();
     GetFromDB::getNumOrders(reinterpret_cast<int &>(g->loOrderKey), env);
     g->barrierW = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
     g->barrierT = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
     g->typeOfRun = none;
-    auto* workload = new Workload();
-    workload->ExecuteWorkloads(g);
-    auto* r = new Results();
-    workload->ReturnResults(r);
+    auto workload = std::make_unique<Workload>();
+    workload->ExecuteWorkloads(g.get());
+    auto r = std::make_unique<Results>();
+    workload->ReturnResults(r.get());
+    double peak_throughput = 0;
     if(choice==1)
         peak_throughput = r->getTransactionalThroughput();
     else if(choice==2)
         peak_throughput = r->getAnalyticalThroughput();
     auto endTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-    cout << "\n[DONE] Choice: [3] Run Benchmark" << endl;
+    cout << "\n[DONE] Choice: [3] Run Benchmark with tc=" << tc << ", ac=" << ac << ", peak_throughput=" << peak_throughput << endl;
     cout << "START TIME of [3] " << ctime(&startTime) << endl;
     cout << "END TIME of [3] " << ctime(&endTime) << endl;
-    delete g;
-    g = NULL;
-    delete workload;
-    workload = NULL;
-    delete r;
-    r = NULL;
+
+    g.reset();
+    workload.reset();
+    r.reset();
+
     deleteTuples();
     return peak_throughput; 
 }
@@ -98,6 +99,7 @@ void Frontier::findMaxTCAC(){
     int step;
     int i;
     int clients;
+    // First find max AC, then find max TC
     for(int c=1; c >-1; c--){
         init_peak_found = false;
         final_peak_found = false;
@@ -109,11 +111,10 @@ void Frontier::findMaxTCAC(){
         while(init_peak_found==false){
             clients = i*step;
             current_throughput = runBenchmark(clients, choice[c]);
-            if(current_throughput - previous_throughput > 0.05*previous_throughput){
+            if (current_throughput - previous_throughput > 0.05*previous_throughput) {
                 previous_throughput = current_throughput;
                 previous_peak = clients;
-            }
-            else {
+            } else {
                 init_peak_found = true;
                 init_peak = previous_peak;
             }
@@ -123,27 +124,29 @@ void Frontier::findMaxTCAC(){
         while(final_peak_found==false){
             clients = init_peak+i;
             current_throughput = runBenchmark(clients, choice[c]);
-            if(current_throughput - previous_throughput > 0.05*previous_throughput){
+            if (current_throughput - previous_throughput > 0.05*previous_throughput) {
                 previous_throughput = current_throughput;
                 previous_peak = clients;
-            }
-            else{
+            } else {
                 final_peak_found = true;
                 final_peak = previous_peak;
             }
             i++;
         }
-        if(choice[c]==1) 
+        if(choice[c]==1) {
+            cout << "pick " << final_peak << " as max tc";
             setMaxTC(final_peak);
-        else
+        } else {
+            cout << "pick " << final_peak << " as max ac";
             setMaxAC(final_peak);
+        }
     }
     
 }
 
 void Frontier::findFrontier(){
-    int max_ac = getMaxAC();
-    int max_tc = getMaxTC();
+    const int max_ac = getMaxAC();
+    const int max_tc = getMaxTC();
     int tc, ac = 0;
     constexpr double ratios[6] = {0, 0.1, 0.2, 0.5, 0.8, 1};
     constexpr int ratios_num = sizeof(ratios)/sizeof(ratios[0]);
@@ -157,7 +160,9 @@ void Frontier::findFrontier(){
 		        ac = 1;
 	        else
 		        ac = floor(ratios[j]*max_ac);	    
-	    createFreshnessTable(tc);         // the freshness table is recreated everytime the number of T clients changes 
+
+	        createFreshnessTable(tc);         // the freshness table is recreated every time the number of T clients changes 
+
             auto startTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
             cout << "\nChoice: [3] Run Benchmark" << endl;
             cout << "START TIME of [3] " << ctime(&startTime) << endl;
@@ -165,43 +170,42 @@ void Frontier::findFrontier(){
             Driver::setEnv(env);
             UserInput::setAnalyticalClients(ac);
             UserInput::setTransactionalClients(tc);
-            auto* g = new Globals();
+            auto g = std::make_unique<Globals>();
             GetFromDB::getNumOrders(reinterpret_cast<int &>(g->loOrderKey), env);
             g->barrierW = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
             g->barrierT = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
             g->typeOfRun = none;
-            auto* workload = new Workload();
-            workload->ExecuteWorkloads(g);
-            auto* r = new Results();
-            workload->ReturnResults(r);
+            auto workload = std::make_unique<Workload>();
+            workload->ExecuteWorkloads(g.get());
+            auto r = std::make_unique<Results>();
+            workload->ReturnResults(r.get());
             auto endTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
             cout << "\n[DONE] Choice: [3] Run Benchmark" << endl;
             cout << "START TIME of [3] " << ctime(&startTime) << endl;
             cout << "END TIME of [3] " << ctime(&endTime) << endl;
-            delete g;
-            g = NULL;
-            delete workload;
-            workload = NULL;
-            delete r;
-            r = NULL;
-	    deleteTuples();
-	    sleep(2);
+
+            g.reset();
+            workload.reset();
+            r.reset();
+
+            deleteTuples();
+            sleep(2);
       }
     }
 }
 
-void Frontier::setMaxTC(int& tc){
+void Frontier::setMaxTC(int tc){
     max_tc = tc;
 }
 
-void Frontier::setMaxAC(int& ac){
+void Frontier::setMaxAC(int ac){
     max_ac = ac;
 }
 
-int Frontier::getMaxTC(){
+int Frontier::getMaxTC() const{
     return max_tc;
 }
 
-int Frontier::getMaxAC(){
+int Frontier::getMaxAC() const{
     return max_ac;
 }

@@ -53,7 +53,7 @@ void Workload::TransactionalStreamPS(TransactionalClient* tClient, Globals* g, S
     int loOrderKey;
     chrono::steady_clock::time_point startTime;
     chrono::high_resolution_clock::time_point  execTimeStart;
-    cout << "You chosed PREPARED STATEMENTS" << endl;
+    cout << "You chose PREPARED STATEMENTS" << endl;
     long  latency, commitTime;
     if(UserInput::getdbChoice() == tidb){
         if(g->typeOfRun == warmup) {
