@@ -845,18 +845,18 @@ vector<vector<string>> SQLDialect::deleteTuplesStmt = {
 };
 
 vector<string> SQLDialect::createFreshnessTableStmt = {
-                "CREATE TABLE HAT.\"FRESHNESS",
-                "\"(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER);"
+                "CREATE TABLE HAT.FRESHNESS",
+                "(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER);"
 };
 
 vector<string> SQLDialect::deleteFreshnessTableStmt = {
-                "DROP TABLE HAT.\"FRESHNESS",
-		"\";"
+                "DROP TABLE HAT.FRESHNESS",
+		";"
 };
 
 vector<string> SQLDialect::populateFreshnessTableStmt = {
-                "INSERT INTO HAT.\"FRESHNESS",
-		"\"(F_TXNNUM, F_CLIENTNUM) VALUES(0,",
+                "INSERT INTO HAT.FRESHNESS",
+		"(F_TXNNUM, F_CLIENTNUM) VALUES(0,",
 		");",
 		"ALTER TABLE HAT.FRESHNESS",
 	       	" SET TIFLASH REPLICA 1;"
