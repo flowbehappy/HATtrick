@@ -42,17 +42,21 @@ void Frontier::createFreshnessTable(int& tc){
     }
     Driver::freeStmtHandle(stmt);
     Driver::disconnectDB(dbc);
-} 
+}
 
-double Frontier::runBenchmark(const int peak, const int choice){
+double Frontier::runBenchmark(const int peak, const WorkloadType type)
+{
     int ac = 0, tc = 0;
-    if(choice == 1){   // seeking max for transactional workload 
+    switch (type)
+    {
+    case WorkloadType::Transactional:
+        // seeking max for transactional workload
         tc = peak;
-        ac = 0;
-    } 
-    else if(choice == 2){  // seeking max for analytical workload
-        tc = 0;
+        break;
+    case WorkloadType::Analytical:
+        // seeking max for analytical workload
         ac = peak;
+        break;
     }
     createFreshnessTable(tc);
 
@@ -65,18 +69,23 @@ double Frontier::runBenchmark(const int peak, const int choice){
     UserInput::setTransactionalClients(tc);
     auto g = std::make_unique<Globals>();
     GetFromDB::getNumOrders(reinterpret_cast<int &>(g->loOrderKey), env);
-    g->barrierW = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
-    g->barrierT = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
-    g->typeOfRun = none;
+    g->barrierW   = new Barrier(UserInput::getTranClients() + UserInput::getAnalClients());
+    g->barrierT   = new Barrier(UserInput::getTranClients() + UserInput::getAnalClients());
+    g->typeOfRun  = none;
     auto workload = std::make_unique<Workload>();
     workload->ExecuteWorkloads(g.get());
     auto r = std::make_unique<Results>();
     workload->ReturnResults(r.get());
     double peak_throughput = 0;
-    if(choice==1)
+    switch (type)
+    {
+    case WorkloadType::Transactional:
         peak_throughput = r->getTransactionalThroughput();
-    else if(choice==2)
+        break;
+    case WorkloadType::Analytical:
         peak_throughput = r->getAnalyticalThroughput();
+        break;
+    }
     auto endTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
     cout << "\n[DONE] Choice: [3] Run Benchmark with tc=" << tc << ", ac=" << ac << ", peak_throughput=" << peak_throughput << endl;
     cout << "START TIME of [3] " << ctime(&startTime) << endl;
@@ -87,71 +96,69 @@ double Frontier::runBenchmark(const int peak, const int choice){
     r.reset();
 
     deleteTuples();
-    return peak_throughput; 
+    return peak_throughput;
 }
 
-void Frontier::findMaxTCAC(){
-    int choice[] = {1,2};
+int Frontier::findMaxClientCount(const WorkloadType type)
+{
     double current_throughput, previous_throughput;
-    int init_peak, previous_peak, final_peak;
-    bool init_peak_found ;
-    bool final_peak_found;
-    int step;
-    int i;
-    int clients;
-    auto is_peak_found = [](const double cur_th, const double prev_th) {
-        if (prev_th > 0.5) {
+    int    init_peak, previous_peak, final_peak;
+    auto   is_peak_found = [](const double cur_th, const double prev_th) {
+        if (prev_th > 0.5)
+        {
             return cur_th - prev_th > 0.05 * prev_th;
-        } else {
+        }
+        else
+        {
             return cur_th - prev_th > 0.01 * prev_th;
         }
     };
     // First find max AC, then find max TC
-    for(int c=1; c >-1; c--){
-        init_peak_found = false;
-        final_peak_found = false;
-        step = 8;
-        i = 1;
-        clients = 0;
-        previous_peak = i;
-        previous_throughput = runBenchmark(i, choice[c]);
-        while(init_peak_found==false){
-            clients = i*step;
-            current_throughput = runBenchmark(clients, choice[c]);
-            if (is_peak_found(current_throughput, previous_throughput)) {
-                previous_throughput = current_throughput;
-                previous_peak = clients;
-            } else {
-                init_peak_found = true;
-                init_peak = previous_peak;
-            }
-            i++;
+    bool init_peak_found  = false;
+    bool final_peak_found = false;
+    int  step             = 8;
+    int  i                = 1;
+    int  clients          = 0;
+    previous_peak         = i;
+    previous_throughput   = runBenchmark(i, type);
+    while (init_peak_found == false)
+    {
+        clients            = i * step;
+        current_throughput = runBenchmark(clients, type);
+        if (is_peak_found(current_throughput, previous_throughput))
+        {
+            previous_throughput = current_throughput;
+            previous_peak       = clients;
         }
-        i=1;
-        while(final_peak_found==false){
-            clients = init_peak+i;
-            current_throughput = runBenchmark(clients, choice[c]);
-            if (is_peak_found(current_throughput, previous_throughput)) {
-                previous_throughput = current_throughput;
-                previous_peak = clients;
-            } else {
-                final_peak_found = true;
-                final_peak = previous_peak;
-            }
-            i++;
+        else
+        {
+            init_peak_found = true;
+            init_peak       = previous_peak;
         }
-        if(choice[c]==1) {
-            cout << "pick " << final_peak << " as max tc";
-            setMaxTC(final_peak);
-        } else {
-            cout << "pick " << final_peak << " as max ac";
-            setMaxAC(final_peak);
-        }
+        i++;
     }
-    
+    i = 1;
+    while (final_peak_found == false)
+    {
+        clients            = init_peak + i;
+        current_throughput = runBenchmark(clients, type);
+        if (is_peak_found(current_throughput, previous_throughput))
+        {
+            previous_throughput = current_throughput;
+            previous_peak       = clients;
+        }
+        else
+        {
+            final_peak_found = true;
+            final_peak       = previous_peak;
+        }
+        i++;
+    }
+    return final_peak;
 }
 
-void Frontier::findFrontier(){
+void Frontier::findFrontier()
+{
     const int max_ac = getMaxAC();
     const int max_tc = getMaxTC();
     int tc, ac = 0;

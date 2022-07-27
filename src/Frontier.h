@@ -24,8 +24,15 @@ private:
 public:
     void deleteTuples();
     void createFreshnessTable(int& tc);
-    double runBenchmark(int peak, int choice);
-    void findMaxTCAC();
+
+    enum class WorkloadType {
+        Transactional,
+        Analytical,
+    };
+    double runBenchmark(int peak, WorkloadType workload);
+
+    int findMaxClientCount(WorkloadType workload);
+
     void setMaxTC(int tc);
     void setMaxAC(int ac);
     int getMaxTC() const;
