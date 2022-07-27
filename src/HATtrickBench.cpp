@@ -73,11 +73,12 @@ int main(int argc, char* argv[]){
 
     else if(UserInput::getWork() == 3){         // User selected to run the benchmark
         auto* frontier = new Frontier();
-        frontier->findMaxTCAC();
-        int ac = frontier->getMaxAC();
-        int tc = frontier->getMaxTC();
-        frontier->setMaxTC(tc);
+        int ac = frontier->findMaxClientCount(Frontier::WorkloadType::Analytical);
+        cout << "pick " << ac << " as max ac";
         frontier->setMaxAC(ac);
+        int tc = frontier->findMaxClientCount(Frontier::WorkloadType::Transactional);
+        cout << "pick " << tc << " as max tc";
+        frontier->setMaxTC(tc);
         frontier->findFrontier();
     }
 
