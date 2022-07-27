@@ -1,8 +1,7 @@
 
 #include "Results.h"
-#include <filesystem>
 
-namespace fs = std::filesystem;
+#include <sys/stat.h>
 
 void Results::setTotalQueries(vector<AnalyticalClient*>& a){
     for(int i=0; i<UserInput::getAnalClients(); i++) {
@@ -32,8 +31,41 @@ void Results::setAnalyticalThroughput(double& at){
     a_throughput = at;
 }
 
+namespace {
+bool mkpath(const std::string & path)
+{
+    bool bSuccess = false;
+    int  nRC      = ::mkdir(path.c_str(), 0775);
+    if (nRC == -1)
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            //parent didn't exist, try to create it
+            if (mkpath(path.substr(0, path.find_last_of('/'))))
+                //Now, try to create again.
+                bSuccess = 0 == ::mkdir(path.c_str(), 0775);
+            else
+                bSuccess = false;
+            break;
+        case EEXIST:
+            //Done!
+            bSuccess = true;
+            break;
+        default:
+            bSuccess = false;
+            break;
+        }
+    }
+    else
+        bSuccess = true;
+    return bSuccess;
+}
+}
+
 void Results::saveResults() {
-    fs::create_directory("results");	
+    // fs::create_directory("results");	
+    mkpath("result");
     double tt = 0, at = 0;
     if(totalQueries != 0){
             at = (double)totalQueries/testDuration;
