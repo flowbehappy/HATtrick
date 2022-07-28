@@ -337,13 +337,14 @@ vector<vector<string>> SQLDialect::createSchemaStmt = {
                 "	LO_TAX INTEGER,\n"
                 "	LO_COMMITDATE INTEGER,\n"
                 "	LO_SHIPMODE CHAR(10),\n"
-                "	PRIMARY KEY (LO_ORDERKEY,LO_LINENUMBER)\n"
-                ")",
+                "	UNIQUE KEY `UK_ORDR_LINE` ((tidb_shard(`LO_ORDERKEY`)),`LO_ORDERKEY`,`LO_LINENUMBER`)\n"
+                // "	PRIMARY KEY (LO_ORDERKEY,LO_LINENUMBER)\n"
+                ")/*T! SHARD_ROW_ID_BITS=6 */",
                 "CREATE TABLE HAT.HISTORY (\n"
                 "	H_ORDERKEY INTEGER NOT NULL,\n"
                 "	H_CUSTKEY INTEGER NOT NULL,\n"
                 "	H_AMOUNT DECIMAL\n"
-                ")"
+                ")/*T! SHARD_ROW_ID_BITS=6 */"
         },
                 {          
                 // MySQL
@@ -846,7 +847,7 @@ vector<vector<string>> SQLDialect::deleteTuplesStmt = {
 
 vector<string> SQLDialect::createFreshnessTableStmt = {
                 "CREATE TABLE HAT.FRESHNESS",
-                "(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER);"
+                "(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER)/*T! SHARD_ROW_ID_BITS=6 */;"
 };
 
 vector<string> SQLDialect::deleteFreshnessTableStmt = {
