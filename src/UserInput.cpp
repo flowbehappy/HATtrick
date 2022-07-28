@@ -125,8 +125,8 @@ void UserInput::processUserIn(int argc, char* argv[]){
                     "    -dsn <data source name>\n"
                     "    -usr <DB username>\n"
                     "    -pwd <DB password>\n"
-                    "    -min_a <min number of analytical clients, default=1>"
-                    "    -min_t <min number of transactional clients, default=1>"
+                    "    -min_a <min number of analytical clients, default=1>\n"
+                    "    -min_t <min number of transactional clients, default=1>\n"
                     "    -wd <warm up duration in sec>\n"
                     "    -td <test duration in sec>\n"
                     "    -t  <prepared statements or stored procedures [ps, sp]>\n"
@@ -213,9 +213,9 @@ void UserInput::processUserIn(int argc, char* argv[]){
                         if(strcmp(argv[i+1], "ps") == 0 ) UserInput::execType = ps;
                         else if(strcmp(argv[i+1], "sp") == 0 ) UserInput::execType = sp;
                     }
-                    else if (strcmp(argv[i], "min_a") == 0) {
+                    else if (strcmp(argv[i], "-min_a") == 0) {
                         UserInput::analMinClients = atoi(argv[i+1]);
-                    } else if (strcmp(argv[i], "min_t") == 0) {
+                    } else if (strcmp(argv[i], "-min_t") == 0) {
                         UserInput::tranMinClients = atoi(argv[i+1]);
                     }
             }
