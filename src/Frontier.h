@@ -31,7 +31,7 @@ public:
     };
     double runBenchmark(int peak, WorkloadType workload);
 
-    int findMaxClientCount(WorkloadType workload);
+    int findMaxClientCount(WorkloadType workload, int min_num);
 
     void setMaxTC(int tc);
     void setMaxAC(int ac);
