@@ -234,7 +234,7 @@ void Workload::AnalyticalWorkload(AnalyticalClient* aClient , Globals* g){
     SQLHENV env = 0;
     SQLHDBC dbc = 0;
     Driver::setEnv(env);
-    Driver::connectDB(env, dbc);
+    Driver::connectDB2(env, dbc); // connect to dsn2 if available, else failover to dsn1
     aClient->PrepareAnalyticalStmt(dbc);     // prepare the stmt for all the 13 queries once in the beginning
     g->barrierW->wait();
     if(g->typeOfRun == warmup)

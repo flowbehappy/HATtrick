@@ -29,8 +29,10 @@ void Driver::setEnv(SQLHENV& env){
 
 void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc){
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
-    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) UserInput::getDSN().c_str(), SQL_NTS, (SQLCHAR*) \
-    UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
+    const char * dsn_to_connect = UserInput::getDSN().c_str();
+    cout << "connectDB connecting to " << dsn_to_connect << endl;
+    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) dsn_to_connect, SQL_NTS, (SQLCHAR*) \
+      UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
         printf("Driver reported the following diagnostics\n");
         Driver::extract_error("SQLConnect", dbc, SQL_HANDLE_DBC);
@@ -45,8 +47,15 @@ void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc){
 
 void Driver::connectDB2(SQLHENV& env, SQLHDBC& dbc){ // For Postgres streaming replication connection to standby
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
-    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) UserInput::getDSN2().c_str(), SQL_NTS, (SQLCHAR*) \
-    UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
+    const char * dsn_to_connect = nullptr;
+    if (!UserInput::getDSN2().empty()) {
+      dsn_to_connect = UserInput::getDSN2().c_str();
+    } else {
+      dsn_to_connect = UserInput::getDSN().c_str();
+    }
+    cout << "connectDB2 connecting to " << dsn_to_connect << endl;
+    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) dsn_to_connect, SQL_NTS, (SQLCHAR*) \
+      UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
         printf("Driver reported the following diagnostics\n");
         Driver::extract_error("SQLConnect", dbc, SQL_HANDLE_DBC);
