@@ -12,7 +12,6 @@ enum database{postgres, systemx, tidb, mysql};
 enum exectype{ps, sp}; // prepared statements or stored procedures
 
 class UserInput{
-
 	private:
         static const int BATCH_SIZE;
 	    static const int SF;                // scaling factor
@@ -36,6 +35,9 @@ class UserInput{
 		static exectype execType; 			// execution type, prepared statements or stored procedures 
 
 	public:
+		static int analMinClients;
+		static int tranMinClients;
+
         static const int getBatchSize();
 	    static const int getSF();
 	    static const int getCustSize();
@@ -44,7 +46,7 @@ class UserInput{
 	    static const int getLoSize();
         static string getDataPath();
         static string getDSN();
-	static string getDSN2();
+		static string getDSN2();
         static string getDBUser();
         static string getDBPwd();
 	    static int getWork();

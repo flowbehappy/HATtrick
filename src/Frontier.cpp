@@ -6,24 +6,28 @@ void  Frontier::deleteTuples(){
     Driver::setEnv(env);
     SQLHDBC dbc = 0;
     Driver::connectDB(env, dbc);
-    SQLHSTMT stmt = 0;
-    char c = ';';
+    SQLHSTMT     stmt        = 0;
+    char         c           = ';';
     unsigned int num_of_stmt = SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()].size();
-    std::string q(1, c);
+    std::string  q(1, c);
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-    for(unsigned int i=0; i<num_of_stmt; i++){
-        if(i!=num_of_stmt-1 && i!=num_of_stmt-2)
-		Driver::executeStmtDiar(stmt, SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i].c_str());
-	else{
-		Driver::executeStmtDiar(stmt, (SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i]+std::to_string(UserInput::getLoSize())+q).c_str());
-	}
+    for (unsigned int i = 0; i < num_of_stmt; i++)
+    {
+        if (i != num_of_stmt - 1 && i != num_of_stmt - 2)
+            Driver::executeStmtDiar(stmt, SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i].c_str());
+        else
+        {
+            Driver::executeStmtDiar(
+                stmt, (SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i] + std::to_string(UserInput::getLoSize()) + q).c_str());
+        }
     }
     Driver::freeStmtHandle(stmt);
     Driver::disconnectDB(dbc);
 }
 
 
-void Frontier::createFreshnessTable(int& tc){
+void Frontier::createFreshnessTable(int & tc)
+{
     SQLHENV env = 0;
     Driver::setEnv(env);
     SQLHDBC dbc = 0;
@@ -31,14 +35,22 @@ void Frontier::createFreshnessTable(int& tc){
     SQLHSTMT stmt = 0;
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
     std::string s_tc;
-    for(unsigned int i=1; i<=(unsigned int)tc; i++){
-	s_tc = std::to_string(i);
-	Driver::executeStmtDiar(stmt, (SQLDialect::deleteFreshnessTableStmt[0].c_str()+s_tc+SQLDialect::deleteFreshnessTableStmt[1]).c_str());
-    	Driver::executeStmtDiar(stmt, (SQLDialect::createFreshnessTableStmt[0].c_str()+s_tc+SQLDialect::createFreshnessTableStmt[1]).c_str());
-	Driver::executeStmtDiar(stmt, (SQLDialect::populateFreshnessTableStmt[0]+s_tc+SQLDialect::populateFreshnessTableStmt[1]+s_tc+SQLDialect::populateFreshnessTableStmt[2]).c_str());
-        if(UserInput::getdbChoice() == tidb){
-		Driver::executeStmtDiar(stmt, (SQLDialect::populateFreshnessTableStmt[3]+s_tc+SQLDialect::populateFreshnessTableStmt[4]).c_str());
-	}
+    for (unsigned int i = 1; i <= (unsigned int)tc; i++)
+    {
+        s_tc = std::to_string(i);
+        Driver::executeStmtDiar(stmt,
+                                (SQLDialect::deleteFreshnessTableStmt[0].c_str() + s_tc + SQLDialect::deleteFreshnessTableStmt[1]).c_str());
+        Driver::executeStmtDiar(stmt,
+                                (SQLDialect::createFreshnessTableStmt[0].c_str() + s_tc + SQLDialect::createFreshnessTableStmt[1]).c_str());
+        Driver::executeStmtDiar(stmt,
+                                (SQLDialect::populateFreshnessTableStmt[0] + s_tc + SQLDialect::populateFreshnessTableStmt[1] + s_tc
+                                 + SQLDialect::populateFreshnessTableStmt[2])
+                                    .c_str());
+        if (UserInput::getdbChoice() == tidb)
+        {
+            Driver::executeStmtDiar(stmt,
+                                    (SQLDialect::populateFreshnessTableStmt[3] + s_tc + SQLDialect::populateFreshnessTableStmt[4]).c_str());
+        }
     }
     Driver::freeStmtHandle(stmt);
     Driver::disconnectDB(dbc);
@@ -99,11 +111,9 @@ double Frontier::runBenchmark(const int peak, const WorkloadType type)
     return peak_throughput;
 }
 
-int Frontier::findMaxClientCount(const WorkloadType type)
+int Frontier::findMaxClientCount(const WorkloadType type, const int min_num)
 {
-    double current_throughput, previous_throughput;
-    int    init_peak, previous_peak, final_peak;
-    auto   is_peak_found = [](const double cur_th, const double prev_th) {
+    auto is_peak_found = [](const double cur_th, const double prev_th) {
         if (prev_th > 0.5)
         {
             return cur_th - prev_th > 0.05 * prev_th;
@@ -114,17 +124,19 @@ int Frontier::findMaxClientCount(const WorkloadType type)
         }
     };
     // First find max AC, then find max TC
-    bool init_peak_found  = false;
-    bool final_peak_found = false;
-    int  step             = 8;
-    int  i                = 1;
-    int  clients          = 0;
-    previous_peak         = i;
-    previous_throughput   = runBenchmark(i, type);
+    bool init_peak_found = false;
+    int  step            = 8;
+    int  clients         = min_num;
+    int  i               = std::max(1, clients / step);
+    cout << "search begin with: " << clients << endl;
+    int    init_peak           = clients;
+    int    previous_peak       = clients;
+    double previous_throughput = runBenchmark(clients, type); // first round
     while (init_peak_found == false)
     {
-        clients            = i * step;
-        current_throughput = runBenchmark(clients, type);
+        i++; // begin with second round
+        clients                   = i * step;
+        double current_throughput = runBenchmark(clients, type);
         if (is_peak_found(current_throughput, previous_throughput))
         {
             previous_throughput = current_throughput;
@@ -135,13 +147,15 @@ int Frontier::findMaxClientCount(const WorkloadType type)
             init_peak_found = true;
             init_peak       = previous_peak;
         }
-        i++;
     }
-    i = 1;
+
+    int  final_peak;
+    bool final_peak_found = false;
+    i                     = 1;
     while (final_peak_found == false)
     {
-        clients            = init_peak + i;
-        current_throughput = runBenchmark(clients, type);
+        clients                   = init_peak + i;
+        double current_throughput = runBenchmark(clients, type);
         if (is_peak_found(current_throughput, previous_throughput))
         {
             previous_throughput = current_throughput;
