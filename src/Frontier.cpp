@@ -171,23 +171,25 @@ int Frontier::findMaxClientCount(const WorkloadType type, const int min_num)
 
 void Frontier::findFrontier()
 {
-    const int max_ac = getMaxAC();
-    const int max_tc = getMaxTC();
-    int tc, ac = 0;
-    constexpr double ratios[6] = {0, 0.1, 0.2, 0.5, 0.8, 1};
-    constexpr int ratios_num = sizeof(ratios)/sizeof(ratios[0]);
-    for(int i=0; i<ratios_num; i++){
-    	    for(int j=0; j<ratios_num; j++){
-	        if(floor(ratios[i]*max_tc) == 0 && ratios[i]!=0)
-		        tc = 1;
-	        else
-		        tc = floor(ratios[i]*max_tc);
-	        if(floor(ratios[j]*max_ac) == 0 && ratios[j]!=0)
-		        ac = 1;
-	        else
-		        ac = floor(ratios[j]*max_ac);	    
+    const int        max_ac = getMaxAC();
+    const int        max_tc = getMaxTC();
+    int              tc, ac = 0;
+    constexpr double ratios[6]  = {0, 0.1, 0.2, 0.5, 0.8, 1};
+    constexpr int    ratios_num = sizeof(ratios) / sizeof(ratios[0]);
+    for (int i = 0; i < ratios_num; i++)
+    {
+        for (int j = 0; j < ratios_num; j++)
+        {
+            if (floor(ratios[i] * max_tc) == 0 && ratios[i] != 0)
+                tc = 1;
+            else
+                tc = floor(ratios[i] * max_tc);
+            if (floor(ratios[j] * max_ac) == 0 && ratios[j] != 0)
+                ac = 1;
+            else
+                ac = floor(ratios[j] * max_ac);
 
-	        createFreshnessTable(tc);         // the freshness table is recreated every time the number of T clients changes 
+            createFreshnessTable(tc); // the freshness table is recreated every time the number of T clients changes
 
             auto startTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
             cout << "\nChoice: [3] Run Benchmark findFrontier with tc=" << tc << ", ac=" << ac << endl;
@@ -198,17 +200,16 @@ void Frontier::findFrontier()
             UserInput::setTransactionalClients(tc);
             auto g = std::make_unique<Globals>();
             GetFromDB::getNumOrders(reinterpret_cast<int &>(g->loOrderKey), env);
-            g->barrierW = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
-            g->barrierT = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
-            g->typeOfRun = none;
+            g->barrierW   = new Barrier(UserInput::getTranClients() + UserInput::getAnalClients());
+            g->barrierT   = new Barrier(UserInput::getTranClients() + UserInput::getAnalClients());
+            g->typeOfRun  = none;
             auto workload = std::make_unique<Workload>();
             workload->ExecuteWorkloads(g.get());
             auto r = std::make_unique<Results>();
             workload->ReturnResults(r.get());
             auto endTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
             cout << "\n[DONE] Choice: [3] Run Benchmark with tc=" << tc << ", ac=" << ac
-                 << ", t_throughput=" << r->getTransactionalThroughput() 
-                 << ", a_throughput=" << r->getAnalyticalThroughput() << endl;
+                 << ", t_throughput=" << r->getTransactionalThroughput() << ", a_throughput=" << r->getAnalyticalThroughput() << endl;
             cout << "START TIME of [3] " << ctime(&startTime) << endl;
             cout << "END TIME of [3] " << ctime(&endTime) << endl;
 
@@ -218,7 +219,7 @@ void Frontier::findFrontier()
 
             deleteTuples();
             sleep(2);
-      }
+        }
     }
 }
 

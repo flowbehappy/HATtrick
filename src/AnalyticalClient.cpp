@@ -29,8 +29,8 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC& dbc){
 	string subQuery, query;
     	vector<string> queryParts = {"SELECT DISTINCT F_TXNNUM, F_CLIENTNUM FROM (",
 		    			 ") AS TMP1 CROSS JOIN (",
-					 "SELECT * FROM HAT.\"FRESHNESS",
-					 "\"",
+					 "SELECT * FROM HAT.FRESHNESS",
+					 "",
 					 " UNION ALL ",
 					 ") AS TMP2 ORDER BY F_CLIENTNUM"};
     	for(unsigned int i=1; i<=(unsigned int)UserInput::getTranClients(); i++){

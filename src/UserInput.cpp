@@ -52,11 +52,11 @@ string UserInput::getDataPath(){
     return UserInput::dataPath;
 }
 
-string UserInput::getDSN(){
+const string &UserInput::getDSN(){
     return UserInput::dsn;
 }
 
-string UserInput::getDSN2(){
+const string &UserInput::getDSN2(){
     return UserInput::dsn2;
 }
 
@@ -197,10 +197,10 @@ void UserInput::processUserIn(int argc, char* argv[]){
         }
         else if (UserInput::work == 3){
             for(int i=0; i<argc; i++){
-                    if(strcmp(argv[i], "-dsn") == 0 )  UserInput::dsn = string(argv[i+1]);
+                    if     (strcmp(argv[i], "-dsn") == 0 )   UserInput::dsn = string(argv[i+1]);
+                    else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
                     else if(strcmp(argv[i], "-usr") == 0 )  UserInput::dbUser = string(argv[i+1]);
                     else if(strcmp(argv[i], "-pwd") == 0 )  UserInput::dbPwd = string(argv[i+1]);
-                    else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
                     else if(strcmp(argv[i], "-wd") == 0 )  UserInput::warmUpDuration = atoi(argv[i+1]);
                     else if(strcmp(argv[i], "-td") == 0 )  UserInput::testDuration= atoi(argv[i+1]);
                     else if(strcmp(argv[i], "-db") == 0 ) {
