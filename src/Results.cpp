@@ -65,7 +65,7 @@ bool mkpath(const std::string & path)
 
 void Results::saveResults() {
     // fs::create_directory("results");	
-    mkpath("result");
+    mkpath("results");
     double tt = 0, at = 0;
     if(totalQueries != 0){
             at = (double)totalQueries/testDuration;
