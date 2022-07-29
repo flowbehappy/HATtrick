@@ -108,24 +108,31 @@ int main(int argc, char* argv[]){
     }
 
     else if(UserInput::getWork() == 4){         // User selected to run the benchmark
+        int ac = UserInput::getAnalClients();
+        int tc = UserInput::getTranClients();
+        Frontier::createFreshnessTable(tc); // the freshness table is recreated every time the number of T clients changes
+
         auto startTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-        cout << "\nChoice: [3] Run Benchmark" << endl;
-        cout << "START TIME of [3] " << ctime(&startTime) << endl;
+        cout << "\nChoice: [4] Run Benchmark with tc=" << tc << ", ac=" << ac << endl;
+        cout << "START TIME of [4] " << ctime(&startTime) << endl;
         SQLHENV env = 0;
         Driver::setEnv(env);
-        auto* g = new Globals();
+        auto g = std::make_unique<Globals>();
         GetFromDB::getNumOrders(reinterpret_cast<int &>(g->loOrderKey), env);
-        g->barrierW = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
-        g->barrierT = new Barrier(UserInput::getTranClients()+UserInput::getAnalClients());
+        g->barrierW = new Barrier(tc+ac);
+        g->barrierT = new Barrier(tc+ac);
         g->typeOfRun = none;
-        auto* workload = new Workload();
-        workload->ExecuteWorkloads(g);
-        auto* r = new Results();
-        workload->ReturnResults(r);
+        auto workload = std::make_unique<Workload>();
+        workload->ExecuteWorkloads(g.get());
+        auto r = std::make_unique<Results>();
+        workload->ReturnResults(r.get());
         auto endTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
-        cout << "\n[DONE] Choice: [3] Run Benchmark" << endl;
-        cout << "START TIME of [3] " << ctime(&startTime) << endl;
-        cout << "END TIME of [3] " << ctime(&endTime) << endl;
+        cout << "\n[DONE] Choice: [3] Run Benchmark with tc=" << tc << ", ac=" << ac << ", t_throughput=" << r->getTransactionalThroughput()
+             << ", a_throughput=" << r->getAnalyticalThroughput() << endl;
+        cout << "START TIME of [4] " << ctime(&startTime) << endl;
+        cout << "END TIME of [4] " << ctime(&endTime) << endl;
+
+        Frontier::deleteTuples();
     }
     return 0;
 

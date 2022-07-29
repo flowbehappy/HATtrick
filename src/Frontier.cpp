@@ -26,7 +26,7 @@ void  Frontier::deleteTuples(){
 }
 
 
-void Frontier::createFreshnessTable(int & tc)
+void Frontier::createFreshnessTable(const int tc)
 {
     SQLHENV env = 0;
     Driver::setEnv(env);

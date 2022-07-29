@@ -22,8 +22,8 @@ private:
     int max_tc = 0;
     int max_ac = 0;
 public:
-    void deleteTuples();
-    void createFreshnessTable(int& tc);
+    static void deleteTuples();
+    static void createFreshnessTable(int tc);
 
     enum class WorkloadType {
         Transactional,

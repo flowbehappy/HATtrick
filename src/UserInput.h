@@ -55,8 +55,8 @@ class UserInput{
 	    static int getWork();
         static int getAnalClients();
         static int getTranClients();
-	static void setAnalyticalClients(int& ac);
-	static void setTransactionalClients(int& tc);
+		static void setAnalyticalClients(int ac);
+		static void setTransactionalClients(int tc);
         static float getFractionT();
         static int getTestDuration();
         static int getWarmUpDuration();

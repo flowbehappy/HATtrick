@@ -83,11 +83,11 @@ int UserInput::getTranClients(){
 }
 
 
-void UserInput::setAnalyticalClients(int& ac){
+void UserInput::setAnalyticalClients(const int ac){
     UserInput::analClients = ac;
 }
 
-void UserInput::setTransactionalClients(int& tc){
+void UserInput::setTransactionalClients(const int tc){
     UserInput::tranClients = tc;
 }
 
