@@ -90,8 +90,8 @@ int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
     int ret = -1;
     vector<double> fresh;
     double maxFresh = 0.0;
-    int ftxnNum[UserInput::getTranClients()];
-    SQLLEN indicator1 = 0;
+    // int ftxnNum[UserInput::getTranClients()];
+    // SQLLEN indicator1 = 0;
     int done = 0;
 
     if (g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
