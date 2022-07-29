@@ -13,7 +13,7 @@ void TransactionalClient::PrepareFreshnessStmt(SQLHDBC &dbc){
 //    Driver::prepareStmt(dbc, GetFreshnessStmt(), (SQLDialect::freshnessCommands[0]+
 // 			   std::to_string(GetClientNum())+
 // 			   SQLDialect::freshnessCommands[1]).c_str());
-    Driver::prepareStmt(dbc, GetFreshnessStmt(), ("select ? = ? from HAT.FRESHNESS" + std::to_string(GetClientNum())).c_str());
+    Driver::prepareStmt(dbc, GetFreshnessStmt(), "select ? = ?");
 }
 
 int TransactionalClient::NewOrderTransactionPS(SQLHDBC& dbc){
