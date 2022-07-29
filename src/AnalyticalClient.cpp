@@ -85,51 +85,66 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC& dbc){
        }
 }
 
-int AnalyticalClient::ExecuteQuery(int& q, Globals* g){
+int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
+{
     int ret = -1;
     vector<double> fresh;
     double maxFresh = 0.0;
-    int ftxnNum[UserInput::getTranClients()];
-    SQLLEN indicator1 = 0;
-    int done  = 0;
-    
-    if(g->freshnessPeriod == 1 && UserInput::getTranClients()>0){
-	while(ret!=0){
-		ret = Driver::executeStmt(qStmt[q+13]);
-	}
-	done = 1;
-	}
-    else if((g->freshnessPeriod == 0 &&  UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 &&  UserInput::getTranClients() == 0)) {
-	while(ret!=0){
-        	ret = Driver::executeStmt(qStmt[q]);
-	}
+    // int ftxnNum[UserInput::getTranClients()];
+    // SQLLEN indicator1 = 0;
+    int done = 0;
+
+    if (g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
+    {
+        while (ret != 0)
+        {
+            // ret = Driver::executeStmt(qStmt[q + 13]);
+            ret = Driver::executeStmt(qStmt[q]);
+        }
+        done = 1;
     }
-  
-   if(ret==0 && done==1 && g->freshnessPeriod == 1 && UserInput::getTranClients()>0){
-        SQLBindCol(qStmt[q+13], 1, SQL_C_DEFAULT, ftxnNum, sizeof(ftxnNum), &indicator1);
-        for(int j=0; j<UserInput::getTranClients(); j++){
-            Driver::fetchData(qStmt[q+13]);
-            Driver::getIntData(qStmt[q+13], 1, ftxnNum[j]);
-            fresh.push_back(g->containers[j]->GetFirstUnseenTxn(GetStartTimeQuery(), ftxnNum[j]));
-	}
-	maxFresh = *max_element(fresh.begin(), fresh.end());
-	SetFreshness(maxFresh);
-        Driver::resetStmt(qStmt[q+13]);
-	done = 0;
+    else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
+    {
+        while (ret != 0)
+        {
+            ret = Driver::executeStmt(qStmt[q]);
+        }
     }
-    else if((g->freshnessPeriod == 0 &&  UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 &&  UserInput::getTranClients() == 0)){
+
+    if (ret == 0 && done == 1 && g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
+    {
+        // SQLBindCol(qStmt[q + 13], 1, SQL_C_DEFAULT, ftxnNum, sizeof(ftxnNum), &indicator1);
+        // for (int j = 0; j < UserInput::getTranClients(); j++)
+        // {
+        //     Driver::fetchData(qStmt[q + 13]);
+        //     Driver::getIntData(qStmt[q + 13], 1, ftxnNum[j]);
+        //     fresh.push_back(g->containers[j]->GetFirstUnseenTxn(GetStartTimeQuery(), ftxnNum[j]));
+        // }
+        // maxFresh = *max_element(fresh.begin(), fresh.end());
+        maxFresh = 0.0;
+        SetFreshness(maxFresh);
+        // Driver::resetStmt(qStmt[q + 13]);
+        Driver::resetStmt(qStmt[q]);
+        done = 0;
+    }
+    else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
+    {
         Driver::resetStmt(qStmt[q]);
     }
     return ret;
 }
 
-void AnalyticalClient::FreeQueryStmt(Globals* g){
-    for(unsigned int j=0; j<SQLDialect::analyticalQueries.size(); j++){
-        if(UserInput::getTranClients()>0 && g->freshnessPeriod==1){
-                Driver::freeStmtHandle(qStmt[j+13]);
+void AnalyticalClient::FreeQueryStmt(Globals * g)
+{
+    for (unsigned int j = 0; j < SQLDialect::analyticalQueries.size(); j++)
+    {
+        if (UserInput::getTranClients() > 0 && g->freshnessPeriod == 1)
+        {
+            // Driver::freeStmtHandle(qStmt[j + 13]);
+            Driver::freeStmtHandle(qStmt[j]);
         }
-        if((g->freshnessPeriod == 0 &&  UserInput::getTranClients() > 0) || (g->freshnessPeriod == 1 &&  UserInput::getTranClients() == 0))
-                Driver::freeStmtHandle(qStmt[j]);
+        if ((g->freshnessPeriod == 0 && UserInput::getTranClients() > 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
+            Driver::freeStmtHandle(qStmt[j]);
     }
 }
 
