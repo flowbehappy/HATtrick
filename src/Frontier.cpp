@@ -127,13 +127,15 @@ int Frontier::findMaxClientCount(const WorkloadType type, const int min_num)
     bool init_peak_found = false;
     int  step            = 8;
     int  clients         = min_num;
+    int  i               = std::max(1, clients / step);
     cout << "search begin with: " << clients << endl;
     int    init_peak           = clients;
     int    previous_peak       = clients;
-    double previous_throughput = runBenchmark(clients, type);
+    double previous_throughput = runBenchmark(clients, type); // first round
     while (init_peak_found == false)
     {
-        clients += step;
+        i++; // begin with second round
+        clients                   = i * step;
         double current_throughput = runBenchmark(clients, type);
         if (is_peak_found(current_throughput, previous_throughput))
         {
@@ -149,7 +151,7 @@ int Frontier::findMaxClientCount(const WorkloadType type, const int min_num)
 
     int  final_peak;
     bool final_peak_found = false;
-    int  i                = 1;
+    i                     = 1;
     while (final_peak_found == false)
     {
         clients                   = init_peak + i;
