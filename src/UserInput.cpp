@@ -23,6 +23,8 @@ database UserInput::dbChoice;
 exectype UserInput::execType;
 int      UserInput::analMinClients = 1;
 int      UserInput::tranMinClients = 1;
+int      UserInput::analInputClients = 0;
+int      UserInput::tranInputClients = 0;
 
 const int UserInput::getBatchSize(){
     return UserInput::BATCH_SIZE;
@@ -127,6 +129,8 @@ void UserInput::processUserIn(int argc, char* argv[]){
                     "    -pwd <DB password>\n"
                     "    -min_a <min number of analytical clients, default=1>\n"
                     "    -min_t <min number of transactional clients, default=1>\n"
+                    "    -max_a <start directly with the max number of analytical clients. default=0, search the max>\n"
+                    "    -max_t <start directly with the max number of transactional clients, default=0, search the max>\n"
                     "    -wd <warm up duration in sec>\n"
                     "    -td <test duration in sec>\n"
                     "    -t  <prepared statements or stored procedures [ps, sp]>\n"
@@ -217,6 +221,10 @@ void UserInput::processUserIn(int argc, char* argv[]){
                         UserInput::analMinClients = atoi(argv[i+1]);
                     } else if (strcmp(argv[i], "-min_t") == 0) {
                         UserInput::tranMinClients = atoi(argv[i+1]);
+                    } else if (strcmp(argv[i], "-max_a") == 0) {
+                        UserInput::analInputClients = atoi(argv[i+1]);
+                    } else if (strcmp(argv[i], "-max_t") == 0) {
+                        UserInput::tranInputClients = atoi(argv[i+1]);
                     }
             }
             found = 0;
