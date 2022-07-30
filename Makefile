@@ -1,5 +1,5 @@
-CC=g++
-#CC=clang++
+# CC=g++
+CC=clang++
 
 CXXFLAGS=-c -std=c++2a -Wall -Werror \
 	-g -O2 -DNDEBUG # release mode
