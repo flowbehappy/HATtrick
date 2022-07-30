@@ -49,7 +49,7 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC& dbc){
             //     query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[1]+subQuery+queryParts[5];
             //     Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
             // }
-            Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
+            // Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
         }
     }
     else {
@@ -80,7 +80,7 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC& dbc){
             // 		query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[3]+subQuery+queryParts[6];
 	    	// 	Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
 		    // }
-        	Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
+        	// Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
     	}
        }
 }
@@ -99,7 +99,7 @@ int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
         while (ret != 0)
         {
             // ret = Driver::executeStmt(qStmt[q + 13]);
-            ret = Driver::executeStmt(qStmt[q]);
+            ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
         }
         done = 1;
     }
@@ -107,7 +107,7 @@ int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
     {
         while (ret != 0)
         {
-            ret = Driver::executeStmt(qStmt[q]);
+            ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
         }
     }
 
@@ -124,12 +124,13 @@ int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
         maxFresh = 0.0;
         SetFreshness(maxFresh);
         // Driver::resetStmt(qStmt[q + 13]);
-        Driver::resetStmt(qStmt[q]);
+        Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
         done = 0;
     }
     else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
     {
-        Driver::resetStmt(qStmt[q]);
+        // Driver::resetStmt(qStmt[q]);
+        Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
     }
     return ret;
 }
