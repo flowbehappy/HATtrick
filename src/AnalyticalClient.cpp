@@ -1,88 +1,100 @@
 #include "AnalyticalClient.h"
 
-AnalyticalClient::AnalyticalClient() {
-    qStmt = vector<SQLHSTMT>(2*SQLDialect::analyticalQueries.size(), 0);
+AnalyticalClient::AnalyticalClient()
+{
+    // qStmt = vector<SQLHSTMT>(2*SQLDialect::analyticalQueries.size(), 0);
+    qStmt = vector<SQLHSTMT>(SQLDialect::analyticalQueries.size(), 0);
     queriesNum = 0;
-    freshnessVector = {0};  // freshness score for each analytical query executed in the current thread
-    executionTime = vector<vector<double>>(13);   // execution time of each query
+    freshnessVector = {0};                      // freshness score for each analytical query executed in the current thread
+    executionTime = vector<vector<double>>(13); // execution time of each query
     testDuration = 0;
 }
 
-void AnalyticalClient::SetThreadNum(thread::id num){
-    threadNum =  num;
+void AnalyticalClient::SetThreadNum(thread::id num)
+{
+    threadNum = num;
 }
 
-void AnalyticalClient::IncrementQueriesNum(){
+void AnalyticalClient::IncrementQueriesNum()
+{
     queriesNum++;
 }
 
-int AnalyticalClient::GetQueriesNum() const{
+int AnalyticalClient::GetQueriesNum() const
+{
     return queriesNum;
 }
 
-thread::id AnalyticalClient::GetThreadNum(){
+thread::id AnalyticalClient::GetThreadNum()
+{
     return threadNum;
 }
 
-void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC& dbc){
-    if(UserInput::getdbChoice() != tidb){
-	    // string subQuery, query;
-    	// vector<string> queryParts = {"SELECT DISTINCT F_TXNNUM, F_CLIENTNUM FROM (",
-		//     			 ") AS TMP1 CROSS JOIN (",
-		// 			 "SELECT * FROM HAT.FRESHNESS",
-		// 			 "",
-		// 			 " UNION ALL ",
-		// 			 ") AS TMP2 ORDER BY F_CLIENTNUM"};
-    	// for(unsigned int i=1; i<=(unsigned int)UserInput::getTranClients(); i++){
-        //     if (UserInput::getTranClients() == 1){
-        //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3];
-        //     }
-        //     else if(i!=(unsigned int)UserInput::getTranClients()){
-        //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3]+queryParts[4];
-        //     }
-        //         else {
-        //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3];
-        //     }
-    	// }
-        for(unsigned int q=0; q<13; q++){
-            // if(UserInput::getTranClients()>0){
-            //     query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[1]+subQuery+queryParts[5];
-            //     Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
-            // }
-            // Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
-        }
+void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC & dbc)
+{
+    for (unsigned int q = 0; q < 13; q++)
+    {
+        Driver::prepareStmt(dbc, qStmt[q], nullptr);
     }
-    else {
-	    // string subQuery, query;    
-	    // vector<string> queryParts = {"SELECT /*+ read_from_storage(tiflash[HAT.LINEORDER, HAT.PART, HAT.CUSTOMER, HAT.DATE, HAT.SUPPLIER",
-        //                                  ", HAT.FRESHNESS",
-        //                                  "]) */ DISTINCT F_TXNNUM, F_CLIENTNUM FROM (",
-        //                                  ") AS TMP1 CROSS JOIN (",
-        //                                  "SELECT * FROM HAT.FRESHNESS",
-		// 			 " UNION ALL ",
-		// 			 ") AS TMP2 ORDER BY F_CLIENTNUM"};
-        // for(unsigned int i=1; i<=(unsigned int)UserInput::getTranClients(); i++){
-        //         if (UserInput::getTranClients() == 1){
-		// 	queryParts[0] += queryParts[1]+std::to_string(i)+queryParts[2];
-        //                 subQuery += queryParts[4]+std::to_string(i);
-        //         }
-        //         else if(i!=(unsigned int)UserInput::getTranClients()){
-		// 	queryParts[0] += queryParts[1]+std::to_string(i); 
-		// 	subQuery += queryParts[4]+std::to_string(i)+queryParts[5];
-        //         }
-        //         else {
-        //                 queryParts[0] += queryParts[1]+std::to_string(i)+queryParts[2];
-		// 	subQuery += queryParts[4]+std::to_string(i);
-        //         }
-        // }
-    	for(unsigned int q=0; q<13; q++){
-    		// if(UserInput::getTranClients()>0){
-            // 		query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[3]+subQuery+queryParts[6];
-	    	// 	Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
-		    // }
-        	// Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
-    	}
-       }
+
+    // if(UserInput::getdbChoice() != tidb){
+    // string subQuery, query;
+    // vector<string> queryParts = {"SELECT DISTINCT F_TXNNUM, F_CLIENTNUM FROM (",
+    //     			 ") AS TMP1 CROSS JOIN (",
+    // 			 "SELECT * FROM HAT.FRESHNESS",
+    // 			 "",
+    // 			 " UNION ALL ",
+    // 			 ") AS TMP2 ORDER BY F_CLIENTNUM"};
+    // for(unsigned int i=1; i<=(unsigned int)UserInput::getTranClients(); i++){
+    //     if (UserInput::getTranClients() == 1){
+    //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3];
+    //     }
+    //     else if(i!=(unsigned int)UserInput::getTranClients()){
+    //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3]+queryParts[4];
+    //     }
+    //         else {
+    //             subQuery += queryParts[2]+std::to_string(i)+queryParts[3];
+    //     }
+    // }
+    // for(unsigned int q=0; q<13; q++){
+    // if(UserInput::getTranClients()>0){
+    //     query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[1]+subQuery+queryParts[5];
+    //     Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
+    // }
+    // Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
+    // }
+    // }
+    // else {
+    // string subQuery, query;
+    // vector<string> queryParts = {"SELECT /*+ read_from_storage(tiflash[HAT.LINEORDER, HAT.PART, HAT.CUSTOMER, HAT.DATE, HAT.SUPPLIER",
+    //                                  ", HAT.FRESHNESS",
+    //                                  "]) */ DISTINCT F_TXNNUM, F_CLIENTNUM FROM (",
+    //                                  ") AS TMP1 CROSS JOIN (",
+    //                                  "SELECT * FROM HAT.FRESHNESS",
+    // 			 " UNION ALL ",
+    // 			 ") AS TMP2 ORDER BY F_CLIENTNUM"};
+    // for(unsigned int i=1; i<=(unsigned int)UserInput::getTranClients(); i++){
+    //         if (UserInput::getTranClients() == 1){
+    // 	queryParts[0] += queryParts[1]+std::to_string(i)+queryParts[2];
+    //                 subQuery += queryParts[4]+std::to_string(i);
+    //         }
+    //         else if(i!=(unsigned int)UserInput::getTranClients()){
+    // 	queryParts[0] += queryParts[1]+std::to_string(i);
+    // 	subQuery += queryParts[4]+std::to_string(i)+queryParts[5];
+    //         }
+    //         else {
+    //                 queryParts[0] += queryParts[1]+std::to_string(i)+queryParts[2];
+    // 	subQuery += queryParts[4]+std::to_string(i);
+    //         }
+    // }
+    // for(unsigned int q=0; q<13; q++){
+    // if(UserInput::getTranClients()>0){
+    // 		query = queryParts[0]+SQLDialect::analyticalQueries[q]+queryParts[3]+subQuery+queryParts[6];
+    // 	Driver::prepareStmt(dbc, qStmt[q+13], query.c_str());
+    // }
+    // Driver::prepareStmt(dbc, qStmt[q], SQLDialect::analyticalQueries[q].c_str());
+    // }
+    //    }
 }
 
 int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
@@ -149,43 +161,52 @@ void AnalyticalClient::FreeQueryStmt(Globals * g)
     }
 }
 
-void AnalyticalClient::SetExecutionTime(double execTime, int qType){
+void AnalyticalClient::SetExecutionTime(double execTime, int qType)
+{
     executionTime[qType].push_back(execTime);
 }
 
-double AnalyticalClient::GetExecutionTimeSum(int qType){
-    double sum=0.0;
+double AnalyticalClient::GetExecutionTimeSum(int qType)
+{
+    double sum = 0.0;
     int size = GetExecutionTimeSize(qType);
-    for(int i=0; i<size; i++)
+    for (int i = 0; i < size; i++)
         sum += executionTime[qType][i];
     return sum;
 }
 
-int AnalyticalClient::GetExecutionTimeSize(int qType){
+int AnalyticalClient::GetExecutionTimeSize(int qType)
+{
     return executionTime[qType].size();
 }
 
 
-void AnalyticalClient::SetTestDuration(int duration){
+void AnalyticalClient::SetTestDuration(int duration)
+{
     testDuration = duration;
 }
 
-int AnalyticalClient::GetTestDuration(){
+int AnalyticalClient::GetTestDuration()
+{
     return testDuration;
 }
-    
-void AnalyticalClient::SetStartTimeQuery(long sTime){
+
+void AnalyticalClient::SetStartTimeQuery(long sTime)
+{
     startTime = sTime;
 }
 
-long& AnalyticalClient::GetStartTimeQuery(){
+long & AnalyticalClient::GetStartTimeQuery()
+{
     return startTime;
 }
 
-void AnalyticalClient::SetFreshness(double& freshness){
+void AnalyticalClient::SetFreshness(double & freshness)
+{
     freshnessVector.push_back(freshness);
 }
 
-vector<double>& AnalyticalClient::GetFreshness(){
+vector<double> & AnalyticalClient::GetFreshness()
+{
     return freshnessVector;
 }

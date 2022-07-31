@@ -173,6 +173,10 @@ void Driver::prepareStmt(SQLHDBC & dbc, SQLHSTMT & stmt, const char * query)
         Driver::extract_error("SQLAllocHandle in prepareStmt.", stmt, SQL_HANDLE_STMT);
         exit(1);
     }
+
+    if (query == nullptr)
+        return;
+
     SQLRETURN pre = SQLPrepare(stmt, (unsigned char *)query, SQL_NTS);
 
     if (pre == SQL_SUCCESS_WITH_INFO)
