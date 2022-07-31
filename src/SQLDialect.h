@@ -18,6 +18,7 @@ class SQLDialect{
         static vector<string> deleteFreshnessTableStmt;
         static vector<string> populateFreshnessTableStmt;
         static vector<string> analyticalQueries; 
+        static vector<string> analyticalQueries_pg; 
         static vector<vector<string>> transactionalQueries;          // for stored procedures
         static vector<string> transactionalCommands;     // for prepared statements
 	static vector<string> freshnessCommands;

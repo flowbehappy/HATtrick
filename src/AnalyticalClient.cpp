@@ -99,52 +99,60 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC & dbc)
 
 int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
 {
+
     int ret = -1;
-    vector<double> fresh;
-    double maxFresh = 0.0;
-    // int ftxnNum[UserInput::getTranClients()];
-    // SQLLEN indicator1 = 0;
-    int done = 0;
 
-    if (g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
+    while (ret != 0)
     {
-        while (ret != 0)
-        {
-            // ret = Driver::executeStmt(qStmt[q + 13]);
-            ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
-        }
-        done = 1;
-    }
-    else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
-    {
-        while (ret != 0)
-        {
-            ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
-        }
-    }
-
-    if (ret == 0 && done == 1 && g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
-    {
-        // SQLBindCol(qStmt[q + 13], 1, SQL_C_DEFAULT, ftxnNum, sizeof(ftxnNum), &indicator1);
-        // for (int j = 0; j < UserInput::getTranClients(); j++)
-        // {
-        //     Driver::fetchData(qStmt[q + 13]);
-        //     Driver::getIntData(qStmt[q + 13], 1, ftxnNum[j]);
-        //     fresh.push_back(g->containers[j]->GetFirstUnseenTxn(GetStartTimeQuery(), ftxnNum[j]));
-        // }
-        // maxFresh = *max_element(fresh.begin(), fresh.end());
-        maxFresh = 0.0;
-        SetFreshness(maxFresh);
-        // Driver::resetStmt(qStmt[q + 13]);
-        Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
-        done = 0;
-    }
-    else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
-    {
-        // Driver::resetStmt(qStmt[q]);
-        Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries[q].c_str());
+        ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
     }
     return ret;
+
+    // vector<double> fresh;
+    // double maxFresh = 0.0;
+    // // int ftxnNum[UserInput::getTranClients()];
+    // // SQLLEN indicator1 = 0;
+    // int done = 0;
+
+    // if (g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
+    // {
+    //     while (ret != 0)
+    //     {
+    //         // ret = Driver::executeStmt(qStmt[q + 13]);
+    //         ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
+    //     }
+    //     done = 1;
+    // }
+    // else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
+    // {
+    //     while (ret != 0)
+    //     {
+    //         ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
+    //     }
+    // }
+
+    // if (ret == 0 && done == 1 && g->freshnessPeriod == 1 && UserInput::getTranClients() > 0)
+    // {
+    //     // SQLBindCol(qStmt[q + 13], 1, SQL_C_DEFAULT, ftxnNum, sizeof(ftxnNum), &indicator1);
+    //     // for (int j = 0; j < UserInput::getTranClients(); j++)
+    //     // {
+    //     //     Driver::fetchData(qStmt[q + 13]);
+    //     //     Driver::getIntData(qStmt[q + 13], 1, ftxnNum[j]);
+    //     //     fresh.push_back(g->containers[j]->GetFirstUnseenTxn(GetStartTimeQuery(), ftxnNum[j]));
+    //     // }
+    //     // maxFresh = *max_element(fresh.begin(), fresh.end());
+    //     maxFresh = 0.0;
+    //     SetFreshness(maxFresh);
+    //     // Driver::resetStmt(qStmt[q + 13]);
+    //     Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
+    //     done = 0;
+    // }
+    // else if ((g->freshnessPeriod == 0 && UserInput::getTranClients() >= 0) || (g->freshnessPeriod == 1 && UserInput::getTranClients() == 0))
+    // {
+    //     // Driver::resetStmt(qStmt[q]);
+    //     Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
+    // }
+    // return ret;
 }
 
 void AnalyticalClient::FreeQueryStmt(Globals * g)
