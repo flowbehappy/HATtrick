@@ -10,7 +10,7 @@ bool Workload::runTime(chrono::steady_clock::time_point& startTime, int duration
         return false;
 }
 
-void Workload::AnalyticalStream(AnalyticalClient* aClient, Globals* g){
+void Workload::AnalyticalStream(AnalyticalClient* aClient, Globals* g, SQLHDBC& dbc){
     int q=0;
     [[maybe_unused]] int ret = -1;
     chrono::steady_clock::time_point startTime;
@@ -20,7 +20,7 @@ void Workload::AnalyticalStream(AnalyticalClient* aClient, Globals* g){
         q = DataSrc::uniformIntDist(0, 12);
         startTime = chrono::steady_clock::now();
         while (runTime(startTime, UserInput::getWarmUpDuration())==true) {
-            ret = aClient->ExecuteQuery(q, g);
+            ret = aClient->ExecuteQuery(q, g, dbc);
            if (q == 12)
                 q = 0;
             else
@@ -35,7 +35,7 @@ void Workload::AnalyticalStream(AnalyticalClient* aClient, Globals* g){
                 aClient->SetStartTimeQuery(duration_cast<chrono::nanoseconds>(high_resolution_clock::now().time_since_epoch()).count());
             }
             execTimeStart = chrono::high_resolution_clock::now();      // start timer to measure the response time	    
-            ret = aClient->ExecuteQuery(q, g);
+            ret = aClient->ExecuteQuery(q, g, dbc);
             execTimeEnd = chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - execTimeStart).count();
             aClient->SetExecutionTime(execTimeEnd, q);
             if(ret == 0)
@@ -238,12 +238,12 @@ void Workload::AnalyticalWorkload(AnalyticalClient* aClient , Globals* g){
     aClient->PrepareAnalyticalStmt(dbc);     // prepare the stmt for all the 13 queries once in the beginning
     g->barrierW->wait();
     if(g->typeOfRun == warmup)
-        AnalyticalStream(aClient, g);
+        AnalyticalStream(aClient, g, dbc);
     cout << "[Analytical] Warm-up is done for thread: " << aClient->GetThreadNum() <<  endl;
     g->barrierT->wait();
     if(g->typeOfRun == testing){
         startTest = chrono::steady_clock::now();
-        AnalyticalStream(aClient, g);
+        AnalyticalStream(aClient, g, dbc);
     }
     endTest = duration_cast<seconds>(steady_clock::now() - startTest).count();
     aClient->SetTestDuration(endTest);

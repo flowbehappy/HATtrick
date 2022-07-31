@@ -97,15 +97,20 @@ void AnalyticalClient::PrepareAnalyticalStmt(SQLHDBC & dbc)
     //    }
 }
 
-int AnalyticalClient::ExecuteQuery(int & q, Globals * g)
+int AnalyticalClient::ExecuteQuery(int & q, Globals * g, SQLHDBC& dbc)
 {
+    SQLHSTMT     stmt        = 0;
+    Driver::prepareStmt(dbc, stmt, nullptr);
 
     int ret = -1;
 
     while (ret != 0)
     {
-        ret = Driver::executeStmtDiar(qStmt[q], SQLDialect::analyticalQueries_pg[q].c_str());
+        ret = Driver::executeStmtDiar(stmt, SQLDialect::analyticalQueries_pg[q].c_str());
     }
+
+    Driver::freeStmtHandle(stmt);
+
     return ret;
 
     // vector<double> fresh;
