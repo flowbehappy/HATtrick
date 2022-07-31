@@ -2,7 +2,7 @@
 #include "UserInput.h"
 
 const int UserInput::BATCH_SIZE = 64;
-const int UserInput::SF=1;  
+const int UserInput::SF=100;  
 const int UserInput::custSize =  30000 * UserInput::SF;
 const int UserInput::suppSize =  2000  * UserInput::SF;
 const int UserInput::partSize =  200000 * static_cast <int>(floor(1+log2(UserInput::SF)));
@@ -21,6 +21,10 @@ int UserInput::warmUpDuration;
 string UserInput::delimiter="!";
 database UserInput::dbChoice;
 exectype UserInput::execType;
+int      UserInput::analMinClients = 1;
+int      UserInput::tranMinClients = 1;
+int      UserInput::analInputClients = 0;
+int      UserInput::tranInputClients = 0;
 
 const int UserInput::getBatchSize(){
     return UserInput::BATCH_SIZE;
@@ -50,11 +54,11 @@ string UserInput::getDataPath(){
     return UserInput::dataPath;
 }
 
-string UserInput::getDSN(){
+const string &UserInput::getDSN(){
     return UserInput::dsn;
 }
 
-string UserInput::getDSN2(){
+const string &UserInput::getDSN2(){
     return UserInput::dsn2;
 }
 
@@ -123,6 +127,10 @@ void UserInput::processUserIn(int argc, char* argv[]){
                     "    -dsn <data source name>\n"
                     "    -usr <DB username>\n"
                     "    -pwd <DB password>\n"
+                    "    -min_a <min number of analytical clients, default=1>\n"
+                    "    -min_t <min number of transactional clients, default=1>\n"
+                    "    -max_a <start directly with the max number of analytical clients. default=0, search the max>\n"
+                    "    -max_t <start directly with the max number of transactional clients, default=0, search the max>\n"
                     "    -wd <warm up duration in sec>\n"
                     "    -td <test duration in sec>\n"
                     "    -t  <prepared statements or stored procedures [ps, sp]>\n"
@@ -130,7 +138,7 @@ void UserInput::processUserIn(int argc, char* argv[]){
                     "\n4. Run benchmark [one experiment]:\n"
                     "    [-run]\n"
                     "    -dsn <data source name>\n"
-		    "    -dsn2 <data source name2>\n"
+                    "    -dsn2 <data source name2>\n"
                     "    -usr <DB username>\n"
                     "    -pwd <DB password>\n"
                     "    -ac <number of analytical clients>\n"
@@ -193,10 +201,10 @@ void UserInput::processUserIn(int argc, char* argv[]){
         }
         else if (UserInput::work == 3){
             for(int i=0; i<argc; i++){
-                    if(strcmp(argv[i], "-dsn") == 0 )  UserInput::dsn = string(argv[i+1]);
+                    if     (strcmp(argv[i], "-dsn") == 0 )   UserInput::dsn = string(argv[i+1]);
+                    else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
                     else if(strcmp(argv[i], "-usr") == 0 )  UserInput::dbUser = string(argv[i+1]);
                     else if(strcmp(argv[i], "-pwd") == 0 )  UserInput::dbPwd = string(argv[i+1]);
-                    else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
                     else if(strcmp(argv[i], "-wd") == 0 )  UserInput::warmUpDuration = atoi(argv[i+1]);
                     else if(strcmp(argv[i], "-td") == 0 )  UserInput::testDuration= atoi(argv[i+1]);
                     else if(strcmp(argv[i], "-db") == 0 ) {
@@ -204,11 +212,19 @@ void UserInput::processUserIn(int argc, char* argv[]){
                         else if(strcmp(argv[i+1], "system-x") == 0 ) UserInput::dbChoice = systemx;
                         else if(strcmp(argv[i+1], "tidb") == 0 ) UserInput::dbChoice = tidb;
                         else if(strcmp(argv[i+1], "mysql") == 0) UserInput::dbChoice = mysql;
-
                     }
                     else if(strcmp(argv[i], "-t") == 0 ) {
                         if(strcmp(argv[i+1], "ps") == 0 ) UserInput::execType = ps;
                         else if(strcmp(argv[i+1], "sp") == 0 ) UserInput::execType = sp;
+                    }
+                    else if (strcmp(argv[i], "-min_a") == 0) {
+                        UserInput::analMinClients = atoi(argv[i+1]);
+                    } else if (strcmp(argv[i], "-min_t") == 0) {
+                        UserInput::tranMinClients = atoi(argv[i+1]);
+                    } else if (strcmp(argv[i], "-max_a") == 0) {
+                        UserInput::analInputClients = atoi(argv[i+1]);
+                    } else if (strcmp(argv[i], "-max_t") == 0) {
+                        UserInput::tranInputClients = atoi(argv[i+1]);
                     }
             }
             found = 0;
@@ -216,7 +232,7 @@ void UserInput::processUserIn(int argc, char* argv[]){
         else if (UserInput::work == 4){
             for(int i=0; i<argc; i++){
                     if(strcmp(argv[i], "-dsn") == 0 )  UserInput::dsn = string(argv[i+1]);
-		    else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
+		            else if(strcmp(argv[i], "-dsn2") == 0 )  UserInput::dsn2 = string(argv[i+1]);
                     else if(strcmp(argv[i], "-usr") == 0 )  UserInput::dbUser = string(argv[i+1]);
                     else if(strcmp(argv[i], "-pwd") == 0 )  UserInput::dbPwd = string(argv[i+1]);
                     else if(strcmp(argv[i], "-ac") == 0 )  UserInput::analClients = atoi(argv[i+1]);

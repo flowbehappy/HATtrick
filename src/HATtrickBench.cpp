@@ -2,6 +2,7 @@
 #include "Driver.h"
 #include "DBInit.h"
 #include "Barrier.h"
+#include "UserInput.h"
 #include "Workload.h"
 #include "GetFromDB.h"
 #include "Globals.h"
@@ -72,12 +73,37 @@ int main(int argc, char* argv[]){
     }
 
     else if(UserInput::getWork() == 3){         // User selected to run the benchmark
-        auto* frontier = new Frontier();
-        frontier->findMaxTCAC();
-        int ac = frontier->getMaxAC();
-        int tc = frontier->getMaxTC();
-        frontier->setMaxTC(tc);
+        auto * frontier = new Frontier();
+        int    ac       = 0;
+        if (UserInput::analInputClients != 0)
+        {
+            ac = UserInput::analInputClients;
+        }
+        else
+        {
+            ac = frontier->findMaxClientCount(Frontier::WorkloadType::Analytical, UserInput::analMinClients);
+            if (ac < 10)
+            {
+                // keep the min to be 10, make it better to sample the performance under {0.1, 0.2, 0.5, 0.8} * max_a
+                cout << "increase max ac from " << ac << " to 10" << endl;
+                ac = 10;
+            }
+        }
+        cout << "pick " << ac << " as max ac" << endl;
         frontier->setMaxAC(ac);
+
+        int tc = 0;
+        if (UserInput::tranInputClients != 0)
+        {
+            tc = UserInput::tranInputClients;
+        }
+        else
+        {
+            tc = frontier->findMaxClientCount(Frontier::WorkloadType::Transactional, UserInput::tranMinClients);
+        }
+        cout << "pick " << tc << " as max tc" << endl;
+        frontier->setMaxTC(tc);
+
         frontier->findFrontier();
     }
 

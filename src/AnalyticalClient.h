@@ -29,7 +29,7 @@ public:
     int GetQueriesNum() const;
     thread::id GetThreadNum();
     void PrepareAnalyticalStmt(SQLHDBC& dbc);
-    int ExecuteQuery(int& q, Globals* g);
+    int ExecuteQuery(int& q, Globals* g, SQLHDBC& dbc);
     void SetFreshness(double& freshness);
     vector<double>& GetFreshness();
     void FreeQueryStmt(Globals* g);
