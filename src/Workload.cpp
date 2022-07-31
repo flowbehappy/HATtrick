@@ -258,10 +258,10 @@ void Workload::TransactionalWorkload(TransactionalClient* tClient, Globals* g, i
     tClient->SetThreadNum(this_thread::get_id());
     SQLHDBC dbc = 0;
     SQLHENV env = 0;
-    Driver::setEnv(env);    
+    Driver::setEnv(env);
     chrono::steady_clock::time_point startTest;
     long endTest;
-    Driver::connectDB(env, dbc);
+    Driver::connectDB(env, dbc, t); // with tp load balance
     tClient->SetClientNum(t);
     if(UserInput::getExecType() == ps) {
         tClient->PrepareTransactionStmt(dbc);

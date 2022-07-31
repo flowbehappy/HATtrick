@@ -4,3 +4,9 @@
 HATtrickBench
 src/*.o
 
+*.log
+results
+results*
+
+.ipynb_checkpoints/
+.DS_Store

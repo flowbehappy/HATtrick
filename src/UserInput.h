@@ -19,10 +19,12 @@ class UserInput{
         static const int suppSize;          // size of the generated Supplier table
         static const int partSize;          // size of the generated Part table
         static const int loSize;            // size of the generated LineOrder table
-	    static string dataPath;             // path of the generated data
-	    static string dsn;                  // data source name
-	    static string dsn2;
-	    static string dbUser;               // database user name
+        static string    dataPath;          // path of the generated data
+        static string    dsn;               // data source name
+        static string    dsn2;              // data source name. AP run on this if set.
+        static string    dsn3;              // data source name. For Scaling the TP workload.
+        static string    dsn4;              // data source name. For Scaling the TP workload.
+        static string dbUser;               // database user name
 	    static string dbPwd;                // database password
         static int work;                    // (-h/--help) 0, generation of data (-gen) 1, run benchmark (-run) 2
         static int analClients;             // #of analytical clients
@@ -48,8 +50,10 @@ class UserInput{
 	    static const int getPartSize();
 	    static const int getLoSize();
         static string getDataPath();
-        static const string &getDSN();
-		static const string &getDSN2();
+        static const string & getDSN() { return dsn; }
+        static const string & getDSN2() { return dsn2; }
+        static const string & getDSN3() { return dsn3; }
+        static const string & getDSN4() { return dsn4; }
         static string getDBUser();
         static string getDBPwd();
 	    static int getWork();

@@ -27,10 +27,22 @@ void Driver::setEnv(SQLHENV& env){
     SQLSetEnvAttr(env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, 0);
 }
 
-void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc){
+void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc, int idx){
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
     const char * dsn_to_connect = UserInput::getDSN().c_str();
-    cout << "connectDB connecting to " << dsn_to_connect << endl;
+    // Always assume user set dsn3 before using dsn4
+    if (UserInput::getDSN3().empty() && !UserInput::getDSN4().empty()){
+      cout << "Should set -dsn3 before using -dsn4!" << endl;
+      exit(2);
+    }
+    const size_t numDSN = 1 + !UserInput::getDSN3().empty() + !UserInput::getDSN4().empty();
+    if (idx % numDSN == 1) {
+      dsn_to_connect = UserInput::getDSN3().c_str();
+    }
+    if (idx % numDSN == 2) {
+      dsn_to_connect = UserInput::getDSN4().c_str();
+    }
+    cout << "connectDB with i=" << idx << " connecting to " << dsn_to_connect << endl;
     SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) dsn_to_connect, SQL_NTS, (SQLCHAR*) \
       UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
