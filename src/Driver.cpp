@@ -134,8 +134,8 @@ int Driver::executeStmtDiar(SQLHSTMT & stmt, const char * query)
     {
         fprintf(stderr, "\nFailed to execute directly the stmt! ret=%d, \nq=`%s`\n", ret, query);
         extract_error("FAIL: SQLExecuteDirect", stmt, SQL_HANDLE_STMT);
-        abort();
-        // return 2;
+        // abort();
+        return 2;
     }
     return 0;
 }
