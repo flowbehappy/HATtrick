@@ -97,24 +97,27 @@ int Driver::executeStmtDiar(SQLHSTMT & stmt, const char * query)
     case SQL_SUCCESS:
     case SQL_SUCCESS_WITH_INFO:
         break;
+
     case SQL_NEED_DATA:
-        printf("ret=SQL_NEED_DATA");
+        fprintf(stderr, "ret=SQL_NEED_DATA");
         break;
     case SQL_STILL_EXECUTING:
-        printf("ret=SQL_STILL_EXECUTING");
+        fprintf(stderr, "ret=SQL_STILL_EXECUTING");
         break;
     case SQL_ERROR:
-        printf("ret=SQL_ERROR");
+        fprintf(stderr, "ret=SQL_ERROR");
         break;
     case SQL_NO_DATA:
-        printf("ret=SQL_NO_DATA");
+        fprintf(stderr, "ret=SQL_NO_DATA");
         break;
     case SQL_INVALID_HANDLE:
-        printf("ret=SQL_INVALID_HANDLE");
+        fprintf(stderr, "ret=SQL_INVALID_HANDLE");
         break;
     case SQL_PARAM_DATA_AVAILABLE:
-        printf("ret=SQL_PARAM_DATA_AVAILABLE");
+        fprintf(stderr, "ret=SQL_PARAM_DATA_AVAILABLE");
         break;
+
+
     default:
         printf("ret=%d(unknown)", ret);
         break;
