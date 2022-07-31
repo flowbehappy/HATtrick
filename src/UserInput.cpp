@@ -2,7 +2,7 @@
 #include "UserInput.h"
 
 const int UserInput::BATCH_SIZE = 64;
-const int UserInput::SF=1;  
+const int UserInput::SF=100;  
 const int UserInput::custSize =  30000 * UserInput::SF;
 const int UserInput::suppSize =  2000  * UserInput::SF;
 const int UserInput::partSize =  200000 * static_cast <int>(floor(1+log2(UserInput::SF)));
