@@ -1,27 +1,56 @@
 #include "Frontier.h"
 #include <memory>
 
-void  Frontier::deleteTuples(){
+void Frontier::deleteTuples()
+{
     SQLHENV env = 0;
     Driver::setEnv(env);
     SQLHDBC dbc = 0;
     Driver::connectDB(env, dbc);
-    SQLHSTMT     stmt        = 0;
+
     char         c           = ';';
     unsigned int num_of_stmt = SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()].size();
     std::string  q(1, c);
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-    for (unsigned int i = 0; i < num_of_stmt; i++)
+
+    for (int i = 0; i < (int)num_of_stmt; i++)
     {
-        if (i != num_of_stmt - 1 && i != num_of_stmt - 2)
-            Driver::executeStmtDiar(stmt, SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i].c_str());
-        else
+        if (i == 0)
         {
+            SQLHSTMT stmt = 0;
+            SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+            Driver::executeStmtDiar(stmt, SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i].c_str());
+            Driver::freeStmtHandle(stmt);
+        }
+        else if (i == 1)
+        {
+            // TiDB limit the txn size, split the delete statement into
+            // smaller txns.
+            int step_count = 20;
+            for (int s = 0; s < step_count; s++)
+            {
+                SQLHSTMT stmt = 0;
+                SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+                Driver::executeStmtDiar(stmt,
+                                        (SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i] + std::to_string(UserInput::getLoSize())
+                                         + " and LO_ORDERKEY % " + std::to_string(step_count) + " = " + std::to_string(s) + q)
+                                            .c_str());
+                Driver::freeStmtHandle(stmt);
+            }
+        }
+        else if (i == 2)
+        {
+            SQLHSTMT stmt = 0;
+            SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
             Driver::executeStmtDiar(
                 stmt, (SQLDialect::deleteTuplesStmt[UserInput::getdbChoice()][i] + std::to_string(UserInput::getLoSize()) + q).c_str());
+            Driver::freeStmtHandle(stmt);
+        }
+        else
+        {
+            printf("deleteTuples illegal status %d", i);
+            abort();
         }
     }
-    Driver::freeStmtHandle(stmt);
     Driver::disconnectDB(dbc);
 }
 
