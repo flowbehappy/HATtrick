@@ -3,6 +3,7 @@
 
 void Frontier::deleteTuples()
 {
+    cout << "deleting tuples..." << endl;
     SQLHENV env = 0;
     Driver::setEnv(env);
     SQLHDBC dbc = 0;
@@ -28,6 +29,7 @@ void Frontier::deleteTuples()
             int step_count = 20;
             for (int s = 0; s < step_count; s++)
             {
+                cout << "deleting tuples with shard " << (s + 1) << "/" << step_count << endl;
                 SQLHSTMT stmt = 0;
                 SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
                 Driver::executeStmtDiar(stmt,
@@ -52,6 +54,7 @@ void Frontier::deleteTuples()
         }
     }
     Driver::disconnectDB(dbc);
+    cout << "delete tuples done." << endl;
 }
 
 
