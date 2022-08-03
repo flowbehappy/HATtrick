@@ -1,5 +1,6 @@
 
 #include "Workload.h"
+#include "UserInput.h"
 
 Workload::Workload() {}
 
@@ -236,6 +237,18 @@ void Workload::AnalyticalWorkload(AnalyticalClient* aClient , Globals* g){
     Driver::setEnv(env);
     Driver::connectDB2(env, dbc); // connect to dsn2 if available, else failover to dsn1
     aClient->PrepareAnalyticalStmt(dbc);     // prepare the stmt for all the 13 queries once in the beginning
+
+    if (UserInput::getdbChoice() == tidb) {
+        // workaround the known issue https://github.com/pingcap/tidb/issues/36836
+        // let the optimizer choose tiflash for AP workload
+        constexpr const char * PREPARE_READ_ENGINES = "set tidb_isolation_read_engines = 'tiflash,tidb';";
+        cout << "executing " << PREPARE_READ_ENGINES << endl;
+        SQLHSTMT stmt = 0;
+        SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+        Driver::executeStmtDiar(stmt, PREPARE_READ_ENGINES);
+        Driver::freeStmtHandle(stmt);
+    }
+
     g->barrierW->wait();
     if(g->typeOfRun == warmup)
         AnalyticalStream(aClient, g);
