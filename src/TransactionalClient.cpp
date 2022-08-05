@@ -320,7 +320,21 @@ void TransactionalClient::NewOrderTransaction(SQLHDBC& dbc){
     Driver::bindIntParam(GetFreshnessStmt(), client_num, 2);
     Driver::executeStmt(GetFreshnessStmt());
     Driver::resetStmt(GetFreshnessStmt());
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 int TransactionalClient::PaymentTransactionSP(SQLHDBC& dbc){
@@ -385,7 +399,21 @@ void TransactionalClient::PaymentTransaction(SQLHDBC& dbc){
     Driver::executeStmt(GetFreshnessStmt());
     Driver::resetStmt(GetFreshnessStmt());
     // End of transaction.
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 int TransactionalClient::CountOrdersTransactionSP(SQLHDBC& dbc){    
@@ -442,7 +470,21 @@ void TransactionalClient::CountOrdersTransaction(SQLHDBC& dbc){
     Driver::executeStmt(GetFreshnessStmt()); 
     Driver::resetStmt(GetFreshnessStmt());
     // End of transaction.
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 SQLHSTMT& TransactionalClient::GetTransactionStmt(){

@@ -1,8 +1,9 @@
 #include "Driver.h"
+#include <sys/_types/_int64_t.h>
 #include "UserInput.h"
 using namespace std;
 
-void Driver::extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type){
+int64_t Driver::extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type){
     SQLINTEGER i = 0;
     SQLINTEGER native;
     SQLCHAR state[7] = {0};
@@ -14,12 +15,17 @@ void Driver::extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type){
     {
         ret = SQLGetDiagRec(type, handle, ++i, state, &native, text, sizeof(text), &len );
         if (SQL_SUCCEEDED(ret))
+        {
             cout << "SQL_SUCCESS_WITH_INFO:\n"
                  << "   State: " << state << "\n"
                  << "   Native error code: " << native  << "\n"
                  << "   Message text: " << text << "\n";
+            return native;
+        }
     }
     while( ret == SQL_SUCCESS );
+    cout << __PRETTY_FUNCTION__ << "out of loop" << endl;
+    return -1;
 }
 
 void Driver::setEnv(SQLHENV& env){
@@ -409,18 +415,18 @@ void Driver::autoCommitOff(SQLHDBC& dbc){
     }
 }
 
-void Driver::endOfTransaction(SQLHDBC& dbc){
+int64_t Driver::endOfTransaction(SQLHDBC& dbc, const char * WHO){
     SQLRETURN t = SQLEndTran(SQL_HANDLE_DBC, dbc, SQL_COMMIT);
     if (t == SQL_SUCCESS) {
       if (t == SQL_SUCCESS_WITH_INFO) {
-        printf("Driver reported the following diagnostics:\n");
-        extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
-        exit(1);
+        printf("Driver reported the following diagnostics:\nwho=`%s`\n", WHO);
+        return extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
       }
+      return 0;
     }
     else {
-        fprintf(stderr, "\nFailed to set auto-commit.\n\n");
-        extract_error("SQLSetConnectAttr", dbc, SQL_HANDLE_DBC);
+        fprintf(stderr, "\nFailed to end of transaction.\nwho=`%s`\n", WHO);
+        extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
         exit(1);
     }
 
