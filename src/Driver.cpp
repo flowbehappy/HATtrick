@@ -1,25 +1,31 @@
 #include "Driver.h"
+#include <sys/_types/_int64_t.h>
 #include "UserInput.h"
 using namespace std;
 
-void Driver::extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type){
+int64_t Driver::extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type){
     SQLINTEGER i = 0;
     SQLINTEGER native;
     SQLCHAR state[7] = {0};
     SQLCHAR text[256]= {0};
     SQLSMALLINT len;
     SQLRETURN ret;
-    cout << "\nThe driver reported the following diagnostics whilst running " << fn << "\n\n";
+    cout << "\nThe driver reported the following diagnostics while running " << fn << "\n\n";
     do
     {
         ret = SQLGetDiagRec(type, handle, ++i, state, &native, text, sizeof(text), &len );
         if (SQL_SUCCEEDED(ret))
+        {
             cout << "SQL_SUCCESS_WITH_INFO:\n"
                  << "   State: " << state << "\n"
                  << "   Native error code: " << native  << "\n"
                  << "   Message text: " << text << "\n";
+            return native;
+        }
     }
     while( ret == SQL_SUCCESS );
+    cout << __PRETTY_FUNCTION__ << "out of loop" << endl;
+    return -1;
 }
 
 void Driver::setEnv(SQLHENV& env){
@@ -27,10 +33,24 @@ void Driver::setEnv(SQLHENV& env){
     SQLSetEnvAttr(env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, 0);
 }
 
-void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc){
+void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc, int idx){
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
-    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) UserInput::getDSN().c_str(), SQL_NTS, (SQLCHAR*) \
-    UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
+    const char * dsn_to_connect = UserInput::getDSN().c_str();
+    // Always assume user set dsn3 before using dsn4
+    if (UserInput::getDSN3().empty() && !UserInput::getDSN4().empty()){
+      cout << "Should set -dsn3 before using -dsn4!" << endl;
+      exit(2);
+    }
+    const size_t numDSN = 1 + !UserInput::getDSN3().empty() + !UserInput::getDSN4().empty();
+    if (idx % numDSN == 1) {
+      dsn_to_connect = UserInput::getDSN3().c_str();
+    }
+    if (idx % numDSN == 2) {
+      dsn_to_connect = UserInput::getDSN4().c_str();
+    }
+    cout << "connectDB with i=" << idx << " connecting to " << dsn_to_connect << endl;
+    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) dsn_to_connect, SQL_NTS, (SQLCHAR*) \
+      UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
         printf("Driver reported the following diagnostics\n");
         Driver::extract_error("SQLConnect", dbc, SQL_HANDLE_DBC);
@@ -45,8 +65,15 @@ void Driver::connectDB(SQLHENV& env, SQLHDBC& dbc){
 
 void Driver::connectDB2(SQLHENV& env, SQLHDBC& dbc){ // For Postgres streaming replication connection to standby
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
-    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) UserInput::getDSN2().c_str(), SQL_NTS, (SQLCHAR*) \
-    UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
+    const char * dsn_to_connect = nullptr;
+    if (!UserInput::getDSN2().empty()) {
+      dsn_to_connect = UserInput::getDSN2().c_str();
+    } else {
+      dsn_to_connect = UserInput::getDSN().c_str();
+    }
+    cout << "connectDB2 connecting to " << dsn_to_connect << endl;
+    SQLRETURN ret = SQLConnect(dbc, (SQLCHAR*) dsn_to_connect, SQL_NTS, (SQLCHAR*) \
+      UserInput::getDBUser().c_str(), SQL_NTS, (SQLCHAR*) UserInput::getDBPwd().c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
         printf("Driver reported the following diagnostics\n");
         Driver::extract_error("SQLConnect", dbc, SQL_HANDLE_DBC);
@@ -62,13 +89,13 @@ void Driver::connectDB2(SQLHENV& env, SQLHDBC& dbc){ // For Postgres streaming r
 int Driver::executeStmtDiar(SQLHSTMT& stmt, const char* query){
     SQLRETURN ret = SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
     if (ret == SQL_SUCCESS_WITH_INFO) {
-	printf("Driver reported the following diagnostics\n");
+	printf("Driver reported the following diagnostics\nq=`%s`\n", query);
         extract_error("SQLExecuteDirect", stmt, SQL_HANDLE_STMT);
 	return 1;
       }
     
     else if(ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-      fprintf(stderr, "\nFailed to execute directly the stmt!\n\n");
+      fprintf(stderr, "\nFailed to execute directly the stmt!\nq=`%s`\n", query);
       extract_error("FAIL: SQLExecuteDirect", stmt, SQL_HANDLE_STMT);
       return 2;
     }
@@ -388,18 +415,18 @@ void Driver::autoCommitOff(SQLHDBC& dbc){
     }
 }
 
-void Driver::endOfTransaction(SQLHDBC& dbc){
+int64_t Driver::endOfTransaction(SQLHDBC& dbc, const char * WHO){
     SQLRETURN t = SQLEndTran(SQL_HANDLE_DBC, dbc, SQL_COMMIT);
     if (t == SQL_SUCCESS) {
       if (t == SQL_SUCCESS_WITH_INFO) {
-        printf("Driver reported the following diagnostics:\n");
-        extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
-        exit(1);
+        printf("Driver reported the following diagnostics:\nwho=`%s`\n", WHO);
+        return extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
       }
+      return 0;
     }
     else {
-        fprintf(stderr, "\nFailed to set auto-commit.\n\n");
-        extract_error("SQLSetConnectAttr", dbc, SQL_HANDLE_DBC);
+        fprintf(stderr, "\nFailed to end of transaction.\nwho=`%s`\n", WHO);
+        extract_error("SQLEndTran", dbc, SQL_HANDLE_DBC);
         exit(1);
     }
 

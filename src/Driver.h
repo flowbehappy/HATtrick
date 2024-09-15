@@ -8,9 +8,9 @@
 class Driver{
 
     public:
-        static void extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type);
+        static int64_t extract_error(const char* fn, SQLHANDLE& handle, SQLSMALLINT type);
         static void setEnv(SQLHENV& env);
-        static void connectDB(SQLHENV& env, SQLHDBC& dbc);
+        static void connectDB(SQLHENV& env, SQLHDBC& dbc, int idx=0);
         static void connectDB2(SQLHENV& env, SQLHDBC& dbc);
         static int executeStmtDiar(SQLHSTMT& stmt, const char* query);
         static int executeStmt(SQLHSTMT& stmt);
@@ -32,7 +32,7 @@ class Driver{
         static void getLongData(SQLHSTMT& stmt, int col, int& dataBuf);
         static void getDoubleData(SQLHSTMT& stmt, int col, double& dataBuf);
         static void autoCommitOff(SQLHDBC& dbc);
-        static void endOfTransaction(SQLHDBC& dbc);
+        static int64_t endOfTransaction(SQLHDBC& dbc, const char * WHO);
 };
 #endif
 

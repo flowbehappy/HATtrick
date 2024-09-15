@@ -1,5 +1,5 @@
 #ifndef HATTRICKBENCH_FRONTIER_H
-#define HATTRICKBENCH_FR0NTIER_H
+#define HATTRICKBENCH_FRONTIER_H
 #include "Driver.h"
 #include "Barrier.h"
 #include "Workload.h"
@@ -21,22 +21,22 @@ class Frontier{
 private:
     int max_tc = 0;
     int max_ac = 0;
-    int num_of_ratios = 0;
-    vector<double> t_throughputs;
-    vector<double> a_throughputs;
 public:
-    void deleteTuples();
-    void createFreshnessTable(int& tc);
-    double runBenchmark(int& peak, int& choice);
-    void findMaxTCAC();
-    void setMaxTC(int& tc);
-    void setMaxAC(int& ac);
-    int getMaxTC();
-    int getMaxAC();
+    static void deleteTuples();
+    static void createFreshnessTable(int tc);
+
+    enum class WorkloadType {
+        Transactional,
+        Analytical,
+    };
+    double runBenchmark(int peak, WorkloadType workload);
+
+    int findMaxClientCount(WorkloadType workload, int min_num);
+
+    void setMaxTC(int tc);
+    void setMaxAC(int ac);
+    int getMaxTC() const;
+    int getMaxAC() const;
     void findFrontier();
-    /*void addTransactionalThroughput(double tt);
-    void addAnalyticalThroughput(double at);
-    vector<double>& getTransactionalThroughputs();
-    vector<double>& getAnalyticalThroughputs();*/
 };
 #endif //HATTRICKBENCH_FRONTIER_H

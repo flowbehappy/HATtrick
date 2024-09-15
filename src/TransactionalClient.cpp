@@ -1,5 +1,6 @@
 
 #include "TransactionalClient.h"
+#include <string>
 
 TransactionalClient::TransactionalClient(){}
 
@@ -10,9 +11,10 @@ void TransactionalClient::PrepareTransactionStmt(SQLHDBC &dbc){
 }
 
 void TransactionalClient::PrepareFreshnessStmt(SQLHDBC &dbc){
-   Driver::prepareStmt(dbc, GetFreshnessStmt(), (SQLDialect::freshnessCommands[0]+
-			   std::to_string(GetClientNum())+
-			   SQLDialect::freshnessCommands[1]).c_str());
+//    Driver::prepareStmt(dbc, GetFreshnessStmt(), (SQLDialect::freshnessCommands[0]+
+// 			   std::to_string(GetClientNum())+
+// 			   SQLDialect::freshnessCommands[1]).c_str());
+    Driver::prepareStmt(dbc, GetFreshnessStmt(), "select ? = ?");
 }
 
 int TransactionalClient::NewOrderTransactionPS(SQLHDBC& dbc){
@@ -86,8 +88,9 @@ int TransactionalClient::NewOrderTransactionPS(SQLHDBC& dbc){
     shipModes = &(shipModesBuf)[0];
     client_num = GetClientNum();
     txn_num = GetLocalCounter();
-    string table = "FRESHNESS";
-    char* tableName = &(table.append(to_string(client_num)))[0];
+    // must be lower case, or pg's stored procedure will raise error
+    string table = "freshness" + to_string(client_num);
+    char* tableName = const_cast<char *>(table.c_str());
     // Call the NewOrder txn
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &GetTransactionStmt());
     Driver::bindIntParam(GetTransactionStmt(), orderKey, 1);
@@ -173,7 +176,8 @@ int TransactionalClient::NewOrderTransactionSS(SQLHDBC& dbc){
     string ordpriority = DataSrc::getOrdPriority(DataSrc::uniformIntDist(0,4));
     char* ord =  &ordpriority[0];
     int shippriority = DataSrc::uniformIntDist(0,1);
-    char* shipp = &to_string(shippriority)[0];
+    string shippriority_str = to_string(shippriority);
+    char* shipp = const_cast<char *>(shippriority_str.data());
     int quantity = DataSrc::uniformIntDist(1, 50);
     double extendedprice = quantity;  // TODO:  multiply with p_price in the store procedure;
     int discount =  DataSrc::uniformIntDist(0, 10);
@@ -278,7 +282,8 @@ void TransactionalClient::NewOrderTransaction(SQLHDBC& dbc){
         ordpriority = DataSrc::getOrdPriority(DataSrc::uniformIntDist(0,4));
         char* ord =  &ordpriority[0];
         shippriority = DataSrc::uniformIntDist(0,1);
-        char* shipp = &to_string(shippriority)[0];
+        string shippriority_str = to_string(shippriority);
+        char* shipp = const_cast<char *>(shippriority_str.data());
         quantity = DataSrc::uniformIntDist(1, 50);
         extendedprice = quantity * p_price;
         discount =  DataSrc::uniformIntDist(0, 10);
@@ -315,7 +320,21 @@ void TransactionalClient::NewOrderTransaction(SQLHDBC& dbc){
     Driver::bindIntParam(GetFreshnessStmt(), client_num, 2);
     Driver::executeStmt(GetFreshnessStmt());
     Driver::resetStmt(GetFreshnessStmt());
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 int TransactionalClient::PaymentTransactionSP(SQLHDBC& dbc){
@@ -327,8 +346,9 @@ int TransactionalClient::PaymentTransactionSP(SQLHDBC& dbc){
     double payAmount =  DataSrc::uniformRealDist(1.00, 104950.00);
     int client_num = GetClientNum();
     int txn_num = GetLocalCounter();
-    string table = "FRESHNESS";
-    char* tableName = &(table.append(to_string(client_num)))[0];
+    // must be lower case, or pg's stored procedure will raise error
+    string table = "freshness" + to_string(client_num);
+    char * tableName = const_cast<char *>(table.c_str());
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &GetTransactionStmt());
     Driver::bindIntParam(GetTransactionStmt(), custkey, 1);
     Driver::bindIntParam(GetTransactionStmt(), suppkey, 2);
@@ -379,7 +399,21 @@ void TransactionalClient::PaymentTransaction(SQLHDBC& dbc){
     Driver::executeStmt(GetFreshnessStmt());
     Driver::resetStmt(GetFreshnessStmt());
     // End of transaction.
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 int TransactionalClient::CountOrdersTransactionSP(SQLHDBC& dbc){    
@@ -391,8 +425,9 @@ int TransactionalClient::CountOrdersTransactionSP(SQLHDBC& dbc){
     char* c_name = &custName[0];    // get random customer name
     int client_num = GetClientNum();
     int txn_num = GetLocalCounter();
-    string table = "FRESHNESS";
-    char* tableName = &(table.append(to_string(client_num)))[0];
+    // must be lower case, or pg's stored procedure will raise error
+    string table = "freshness" + to_string(client_num);
+    char * tableName = const_cast<char *>(table.c_str());
     SQLAllocHandle(SQL_HANDLE_STMT, dbc, &GetTransactionStmt());
     Driver::bindCharParam(GetTransactionStmt(), c_name, 26, 1);
     Driver::bindCharParam(GetTransactionStmt(), tableName, 0, 2);
@@ -435,7 +470,21 @@ void TransactionalClient::CountOrdersTransaction(SQLHDBC& dbc){
     Driver::executeStmt(GetFreshnessStmt()); 
     Driver::resetStmt(GetFreshnessStmt());
     // End of transaction.
-    Driver::endOfTransaction(dbc);
+    for (int num_retry = 0; num_retry < 3; ++num_retry)
+    {
+        auto native_error_code = Driver::endOfTransaction(dbc, __PRETTY_FUNCTION__);
+        if (native_error_code == 0)
+        {
+            return;
+        }
+        if (native_error_code != 8022)
+        { // retryable
+            exit(1);
+        }
+        // else retry
+        cout << "retry " << num_retry + 1 << "/3" << endl;
+    }
+    cout << "retry reach max" << endl;
 }
 
 SQLHSTMT& TransactionalClient::GetTransactionStmt(){

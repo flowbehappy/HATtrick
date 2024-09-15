@@ -1,5 +1,6 @@
 
 #include "Workload.h"
+#include "UserInput.h"
 
 Workload::Workload() {}
 
@@ -49,11 +50,11 @@ void Workload::AnalyticalStream(AnalyticalClient* aClient, Globals* g){
 }
 
 void Workload::TransactionalStreamPS(TransactionalClient* tClient, Globals* g, SQLHDBC& dbc){
-    int p, ret_no;
+    int p;
     int loOrderKey;
     chrono::steady_clock::time_point startTime;
     chrono::high_resolution_clock::time_point  execTimeStart;
-    cout << "You chosed PREPARED STATEMENTS" << endl;
+    cout << "You chose PREPARED STATEMENTS" << endl;
     long  latency, commitTime;
     if(UserInput::getdbChoice() == tidb){
         if(g->typeOfRun == warmup) {
@@ -234,8 +235,20 @@ void Workload::AnalyticalWorkload(AnalyticalClient* aClient , Globals* g){
     SQLHENV env = 0;
     SQLHDBC dbc = 0;
     Driver::setEnv(env);
-    Driver::connectDB(env, dbc);
+    Driver::connectDB2(env, dbc); // connect to dsn2 if available, else failover to dsn1
     aClient->PrepareAnalyticalStmt(dbc);     // prepare the stmt for all the 13 queries once in the beginning
+
+    if (UserInput::getdbChoice() == tidb) {
+        // workaround the known issue https://github.com/pingcap/tidb/issues/36836
+        // let the optimizer choose tiflash for AP workload
+        constexpr const char * PREPARE_READ_ENGINES = "set tidb_isolation_read_engines = 'tiflash,tidb';";
+        cout << "executing " << PREPARE_READ_ENGINES << endl;
+        SQLHSTMT stmt = 0;
+        SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+        Driver::executeStmtDiar(stmt, PREPARE_READ_ENGINES);
+        Driver::freeStmtHandle(stmt);
+    }
+
     g->barrierW->wait();
     if(g->typeOfRun == warmup)
         AnalyticalStream(aClient, g);
@@ -258,10 +271,10 @@ void Workload::TransactionalWorkload(TransactionalClient* tClient, Globals* g, i
     tClient->SetThreadNum(this_thread::get_id());
     SQLHDBC dbc = 0;
     SQLHENV env = 0;
-    Driver::setEnv(env);    
+    Driver::setEnv(env);
     chrono::steady_clock::time_point startTest;
     long endTest;
-    Driver::connectDB(env, dbc);
+    Driver::connectDB(env, dbc, t); // with tp load balance
     tClient->SetClientNum(t);
     if(UserInput::getExecType() == ps) {
         tClient->PrepareTransactionStmt(dbc);

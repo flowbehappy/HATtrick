@@ -12,7 +12,6 @@ enum database{postgres, systemx, tidb, mysql};
 enum exectype{ps, sp}; // prepared statements or stored procedures
 
 class UserInput{
-
 	private:
         static const int BATCH_SIZE;
 	    static const int SF;                // scaling factor
@@ -20,10 +19,12 @@ class UserInput{
         static const int suppSize;          // size of the generated Supplier table
         static const int partSize;          // size of the generated Part table
         static const int loSize;            // size of the generated LineOrder table
-	    static string dataPath;             // path of the generated data
-	    static string dsn;                  // data source name
-	    static string dsn2;
-	    static string dbUser;               // database user name
+        static string    dataPath;          // path of the generated data
+        static string    dsn;               // data source name
+        static string    dsn2;              // data source name. AP run on this if set.
+        static string    dsn3;              // data source name. For Scaling the TP workload.
+        static string    dsn4;              // data source name. For Scaling the TP workload.
+        static string dbUser;               // database user name
 	    static string dbPwd;                // database password
         static int work;                    // (-h/--help) 0, generation of data (-gen) 1, run benchmark (-run) 2
         static int analClients;             // #of analytical clients
@@ -36,6 +37,12 @@ class UserInput{
 		static exectype execType; 			// execution type, prepared statements or stored procedures 
 
 	public:
+		static int analMinClients;
+		static int tranMinClients;
+
+		static int analInputClients;
+		static int tranInputClients;
+
         static const int getBatchSize();
 	    static const int getSF();
 	    static const int getCustSize();
@@ -43,15 +50,17 @@ class UserInput{
 	    static const int getPartSize();
 	    static const int getLoSize();
         static string getDataPath();
-        static string getDSN();
-	static string getDSN2();
+        static const string & getDSN() { return dsn; }
+        static const string & getDSN2() { return dsn2; }
+        static const string & getDSN3() { return dsn3; }
+        static const string & getDSN4() { return dsn4; }
         static string getDBUser();
         static string getDBPwd();
 	    static int getWork();
         static int getAnalClients();
         static int getTranClients();
-	static void setAnalyticalClients(int& ac);
-	static void setTransactionalClients(int& tc);
+        static void setAnalyticalClients(int ac);
+        static void setTransactionalClients(int tc);
         static float getFractionT();
         static int getTestDuration();
         static int getWarmUpDuration();

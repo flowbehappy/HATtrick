@@ -337,13 +337,14 @@ vector<vector<string>> SQLDialect::createSchemaStmt = {
                 "	LO_TAX INTEGER,\n"
                 "	LO_COMMITDATE INTEGER,\n"
                 "	LO_SHIPMODE CHAR(10),\n"
-                "	PRIMARY KEY (LO_ORDERKEY,LO_LINENUMBER)\n"
-                ")",
+                "	UNIQUE KEY `UK_ORDR_LINE` ((tidb_shard(`LO_ORDERKEY`)),`LO_ORDERKEY`,`LO_LINENUMBER`)\n"
+                // "	PRIMARY KEY (LO_ORDERKEY,LO_LINENUMBER)\n"
+                ")/*T! SHARD_ROW_ID_BITS=6 */",
                 "CREATE TABLE HAT.HISTORY (\n"
                 "	H_ORDERKEY INTEGER NOT NULL,\n"
                 "	H_CUSTKEY INTEGER NOT NULL,\n"
                 "	H_AMOUNT DECIMAL\n"
-                ")"
+                ")/*T! SHARD_ROW_ID_BITS=6 */"
         },
                 {          
                 // MySQL
@@ -745,6 +746,7 @@ vector<vector<string>> SQLDialect::createIndexStmt = {
                 "       VALUES (@OrderKey, 4, @CustKey, @PartKey4, @SuppKey4, @DateKey4, @OrdPriority, @ShipPriority, @quantity,\n"
                 "       @ExtendedPrice, @discount, @revenue, @SupplyCost, @tax, @DateKey4, @ShipMode);\n"
 		"END",
+                
 		"CREATE PROCEDURE HAT.PAYMENT(\n"
                 "       @CustKey INT, @SuppKey INT, @amount DECIMAL, @OrderKey INT)\n"
                 "WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER\n"  
@@ -844,18 +846,18 @@ vector<vector<string>> SQLDialect::deleteTuplesStmt = {
 };
 
 vector<string> SQLDialect::createFreshnessTableStmt = {
-                "CREATE TABLE HAT.\"FRESHNESS",
-                "\"(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER);"
+                "CREATE TABLE HAT.FRESHNESS",
+                "(F_TXNNUM INTEGER, F_CLIENTNUM INTEGER)/*T! SHARD_ROW_ID_BITS=6 */;"
 };
 
 vector<string> SQLDialect::deleteFreshnessTableStmt = {
-                "DROP TABLE HAT.\"FRESHNESS",
-		"\";"
+                "DROP TABLE HAT.FRESHNESS",
+		";"
 };
 
 vector<string> SQLDialect::populateFreshnessTableStmt = {
-                "INSERT INTO HAT.\"FRESHNESS",
-		"\"(F_TXNNUM, F_CLIENTNUM) VALUES(0,",
+                "INSERT INTO HAT.FRESHNESS",
+		"(F_TXNNUM, F_CLIENTNUM) VALUES(0,",
 		");",
 		"ALTER TABLE HAT.FRESHNESS",
 	       	" SET TIFLASH REPLICA 1;"
